@@ -4,8 +4,8 @@ import com.google.common.collect.Maps;
 import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import top.focess.command.data.DataBuffer;
+import top.focess.command.data.*;
+import top.focess.command.data.StringBuffer;
 
 import java.util.Map;
 import java.util.Objects;
@@ -14,6 +14,14 @@ import java.util.Objects;
  * Store and parser arguments for better CommandExecutor usage.
  */
 public class DataCollection {
+
+    static {
+        register(DataConverter.LONG_DATA_CONVERTER, LongBuffer::allocate);
+        register(DataConverter.DEFAULT_DATA_CONVERTER, StringBuffer::allocate);
+        register(DataConverter.INTEGER_DATA_CONVERTER, IntBuffer::allocate);
+        register(DataConverter.DOUBLE_DATA_CONVERTER, DoubleBuffer::allocate);
+        register(DataConverter.BOOLEAN_DATA_CONVERTER, BooleanBuffer::allocate);
+    }
 
     private static final Map<DataConverter<?>, BufferGetter> DATA_CONVERTER_BUFFER_MAP = Maps.newConcurrentMap();
     private final Map<Class<?>, DataBuffer> buffers = Maps.newHashMap();
@@ -118,16 +126,6 @@ public class DataCollection {
      */
     public long getLong() {
         return Objects.requireNonNull(this.get(Long.class));
-    }
-
-    /**
-     * Get Command argument in order
-     *
-     * @return the Command argument in order
-     */
-    @NonNull
-    public Command getCommand() {
-        return Objects.requireNonNull(this.get(Command.class));
     }
 
     /**
