@@ -163,6 +163,7 @@ public abstract class Command {
      *
      * @param sender    the executor
      * @param args      the arguments that command spilt by spaces
+     * @param ioHandler the receiver
      * @return the command result
      */
     public final CommandResult execute(@NotNull final CommandSender sender, @NotNull final String[] args,@NotNull IOHandler ioHandler) {
