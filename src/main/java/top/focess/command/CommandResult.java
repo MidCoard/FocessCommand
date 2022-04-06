@@ -35,7 +35,7 @@ public enum CommandResult {
      */
     NEGATIVE(REFUSE, COMMAND_REFUSED, ARGS, ARGS_EXECUTED),
     /**
-     * It includes all executed status CommandResult
+     * It includes all executed CommandResult
      */
     EXECUTED(ALLOW,REFUSE,ARGS_EXECUTED),
     /**
