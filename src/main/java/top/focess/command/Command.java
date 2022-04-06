@@ -180,7 +180,7 @@ public abstract class Command {
      * @param args      the arguments that command spilt by spaces
      * @return the command result
      */
-    public final CommandResult execute(@NotNull final CommandSender sender, @NotNull final String[] args) {
+    public final CommandResult execute(@NotNull final CommandSender sender, @NotNull final String[] args,@NotNull IOHandler ioHandler) {
         if (!this.isRegistered())
             return CommandResult.COMMAND_REFUSED;
         if (!sender.hasPermission(this.getPermission()))
@@ -192,7 +192,7 @@ public abstract class Command {
                 final DataCollection dataCollection;
                 if ((dataCollection = executor.check(args)) != null) {
                     try {
-                        result = executor.execute(sender, dataCollection);
+                        result = executor.execute(sender, dataCollection,ioHandler);
                     } catch (final Exception e) {
                         result = CommandResult.REFUSE;
                     }
@@ -204,7 +204,7 @@ public abstract class Command {
                 }
             }
         if (this.executorPermission.test(sender) && (!flag || result == CommandResult.ARGS)) {
-            this.infoUsage(sender);
+            this.infoUsage(sender,ioHandler);
             return CommandResult.ARGS;
         }
         return result;
@@ -238,7 +238,7 @@ public abstract class Command {
     @NotNull
     public abstract List<String> usage(CommandSender sender);
 
-    public final void infoUsage(final CommandSender sender) {
+    public final void infoUsage(final CommandSender sender, @NotNull IOHandler ioHandler) {
         final List<String> usage = this.usage(sender);
         int pos = 0;
         final int targetPos = 7;
@@ -246,13 +246,13 @@ public abstract class Command {
         while (pos != usage.size()) {
             if (pos % targetPos == 0) {
                 if (stringBuilder != null)
-                    sender.sendMessage(stringBuilder.toString());
+                    ioHandler.output(stringBuilder.toString());
                 stringBuilder = new StringBuilder(usage.get(pos));
             } else stringBuilder.append('\n').append(usage.get(pos));
             pos++;
         }
         if (stringBuilder != null)
-            sender.sendMessage(stringBuilder.toString());
+            ioHandler.output(stringBuilder.toString());
     }
 
     public boolean isInitialize() {
@@ -280,10 +280,10 @@ public abstract class Command {
             this.nullableCommandArguments = (int) Arrays.stream(commandArguments).filter(CommandArgument::isNullable).count();
         }
 
-        private CommandResult execute(final CommandSender sender, final DataCollection dataCollection) {
+        private CommandResult execute(final CommandSender sender, final DataCollection dataCollection, @NotNull IOHandler ioHandler) {
             if (!this.executorPermission.test(sender))
                 return CommandResult.REFUSE;
-            return this.executor.execute(sender, dataCollection);
+            return this.executor.execute(sender, dataCollection,ioHandler);
         }
 
 

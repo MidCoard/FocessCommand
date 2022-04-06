@@ -47,12 +47,19 @@ public class DataCollection {
     }
 
     /**
+     * Unregister the getter of the buffer
+     * @param dataConverter the data converter
+     */
+    public static void unregister(final DataConverter<?> dataConverter) {
+        DATA_CONVERTER_BUFFER_MAP.remove(dataConverter);
+    }
+
+    /**
      * Unregister all the getter of the buffers
      */
     public static void unregisterAll() {
         DATA_CONVERTER_BUFFER_MAP.clear();
     }
-
 
     /**
      * Flip all the buffers. Make them all readable.

@@ -21,10 +21,4 @@ public abstract class CommandSender {
     public boolean hasPermission(final CommandPermission permission) {
         return this.permission.hasPermission(permission);
     }
-
-    /**
-     * Send message to the sender
-     * @param message the message
-     */
-    public abstract void sendMessage(String message);
 }

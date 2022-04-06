@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * Represents a command executor to define how to execute command.
  * <p>
- * This is a functional interface whose functional method is {@link CommandExecutor#execute(CommandSender, DataCollection)}.
+ * This is a functional interface whose functional method is {@link CommandExecutor#execute(CommandSender, DataCollection, IOHandler)}.
  */
 @FunctionalInterface
 public interface CommandExecutor {
@@ -15,9 +15,10 @@ public interface CommandExecutor {
      *
      * @param sender         the executor of the command
      * @param dataCollection parse the arguments the command received
+     * @param ioHandler      the receiver of the command
      * @return the result of this execution
      */
     @NotNull
-    CommandResult execute(CommandSender sender, DataCollection dataCollection);
+    CommandResult execute(CommandSender sender, DataCollection dataCollection, @NotNull IOHandler ioHandler);
 
 }
