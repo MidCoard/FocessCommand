@@ -15,6 +15,8 @@ import java.util.Objects;
  */
 public class DataCollection {
 
+    private static final Map<DataConverter<?>, BufferGetter> DATA_CONVERTER_BUFFER_MAP = Maps.newConcurrentMap();
+
     static {
         register(DataConverter.LONG_DATA_CONVERTER, LongBuffer::allocate);
         register(DataConverter.DEFAULT_DATA_CONVERTER, StringBuffer::allocate);
@@ -23,7 +25,6 @@ public class DataCollection {
         register(DataConverter.BOOLEAN_DATA_CONVERTER, BooleanBuffer::allocate);
     }
 
-    private static final Map<DataConverter<?>, BufferGetter> DATA_CONVERTER_BUFFER_MAP = Maps.newConcurrentMap();
     private final Map<Class<?>, DataBuffer> buffers = Maps.newHashMap();
 
     /**
