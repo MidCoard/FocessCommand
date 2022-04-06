@@ -203,9 +203,14 @@ public abstract class Command {
                     break;
                 }
             }
-        if (this.executorPermission.test(sender) && (!flag || result == CommandResult.ARGS)) {
-            this.infoUsage(sender,ioHandler);
-            return CommandResult.ARGS;
+        if (this.executorPermission.test(sender)) {
+            if (!flag) {
+                this.infoUsage(sender, ioHandler);
+                return CommandResult.ARGS;
+            } else if (result == CommandResult.ARGS) {
+                this.infoUsage(sender, ioHandler);
+                return CommandResult.ARGS_EXECUTED;
+            }
         }
         return result;
     }

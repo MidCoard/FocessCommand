@@ -23,13 +23,21 @@ public enum CommandResult {
      */
     ARGS(8),
     /**
+     * It indicates that print help information to the receiver and the command is executed
+     */
+    ARGS_EXECUTED(16),
+    /**
      * It includes all CommandResult
      */
-    ALL(ALLOW, REFUSE, COMMAND_REFUSED, ARGS),
+    ALL(ALLOW, REFUSE, COMMAND_REFUSED, ARGS, ARGS_EXECUTED),
     /**
      * It includes all negative CommandResult
      */
-    NEGATIVE(REFUSE, COMMAND_REFUSED, ARGS),
+    NEGATIVE(REFUSE, COMMAND_REFUSED, ARGS, ARGS_EXECUTED),
+    /**
+     * It includes all executed status CommandResult
+     */
+    EXECUTED(ALLOW,REFUSE,ARGS_EXECUTED),
     /**
      * No signal
      */
@@ -57,5 +65,13 @@ public enum CommandResult {
 
     public int getValue() {
         return this.value;
+    }
+
+    public boolean contains(final CommandResult result) {
+        return (this.value & result.getValue()) == result.getValue();
+    }
+
+    public boolean isExecuted() {
+        return EXECUTED.contains(this);
     }
 }
