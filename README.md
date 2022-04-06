@@ -10,12 +10,12 @@ Maven:
 <dependency>
     <groupId>top.focess</groupId>
     <artifactId>focess-command</artifactId>
-    <version>1.2.2</version>
+    <version>1.2.3</version>
 </dependency>
 ```
 
 Gradle:
 
 ```gradle
-implementation 'top.focess:focess-command:1.2.2'
+implementation 'top.focess:focess-command:1.2.3'
 ```
