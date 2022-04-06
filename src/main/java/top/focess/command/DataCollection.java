@@ -188,7 +188,7 @@ public class DataCollection {
      * @return the buffer element
      * @throws UnsupportedOperationException if the buffer is not registered
      */
-    @Nullable
+    @NotNull
     public <T> T get(final Class<T> c) {
         if (this.buffers.get(c) == null)
             throw new UnsupportedOperationException();
@@ -204,7 +204,7 @@ public class DataCollection {
      * @return the buffer element
      * @throws UnsupportedOperationException if the buffer is not registered
      */
-    @Nullable
+    @NotNull
     public <T> T get(final Class<T> c, final int index) {
         if (this.buffers.get(c) == null)
             throw new UnsupportedOperationException();
