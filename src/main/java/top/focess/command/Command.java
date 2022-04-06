@@ -24,11 +24,11 @@ public abstract class Command {
     /**
      * The name of the command
      */
-    private String name;
+    private final String name;
     /**
      * The aliases of the command
      */
-    private List<String> aliases;
+    private final List<String> aliases;
 
     /**
      * Indicate whether the command is registered or not
@@ -44,11 +44,6 @@ public abstract class Command {
      * The executor check predicate
      */
     private Predicate<CommandSender> executorPermission;
-
-    /**
-     * Indicate {@link Command#init()} is called
-     */
-    private boolean initialize;
 
     /**
      * Instance a <code>Command</code> Class with special name and aliases.
@@ -67,16 +62,6 @@ public abstract class Command {
         } catch (final Exception e) {
             throw new CommandLoadException(this.getClass(), e);
         }
-        this.initialize = true;
-    }
-
-    /**
-     * Provide a constructor to help {@link CommandType} design.
-     * Never instance it!Command will be instanced when this class is loaded automatically.
-     */
-    protected Command() {
-        this.permission = CommandPermission.MEMBER;
-        this.executorPermission = i -> true;
     }
 
     /**
@@ -258,10 +243,6 @@ public abstract class Command {
         }
         if (stringBuilder != null)
             ioHandler.output(stringBuilder.toString());
-    }
-
-    public boolean isInitialize() {
-        return this.initialize;
     }
 
     /**
