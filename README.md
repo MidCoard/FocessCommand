@@ -4,7 +4,18 @@ This API is used to create commands for Focess. I made this API public because i
 
 # Development
 
-Maven
+Maven:
 
+```xml
+<dependency>
+    <groupId>top.focess</groupId>
+    <artifactId>focess-command</artifactId>
+    <version>1.2.1</version>
+</dependency>
+```
 
-Gradle
+Gradle:
+
+```gradle
+implementation 'top.focess:focess-command:1.2.1'
+```
