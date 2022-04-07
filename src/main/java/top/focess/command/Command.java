@@ -165,8 +165,10 @@ public abstract class Command {
      * @param args      the arguments that command spilt by spaces
      * @param ioHandler the receiver
      * @return the command result
+     *
+     * @throws Exception the exception that occurred when executing the command
      */
-    public final CommandResult execute(@NotNull final CommandSender sender, @NotNull final String[] args,@NotNull IOHandler ioHandler) {
+    public final CommandResult execute(@NotNull final CommandSender sender, @NotNull final String[] args,@NotNull IOHandler ioHandler) throws Exception {
         if (!this.isRegistered())
             return CommandResult.COMMAND_REFUSED;
         if (!sender.hasPermission(this.getPermission()))
@@ -177,15 +179,19 @@ public abstract class Command {
             if (sender.hasPermission(executor.permission)) {
                 final DataCollection dataCollection;
                 if ((dataCollection = executor.check(args)) != null) {
+                    Exception exception = null;
                     try {
                         result = executor.execute(sender, dataCollection,ioHandler);
                     } catch (final Exception e) {
                         result = CommandResult.REFUSE;
+                        exception = e;
                     }
                     for (final CommandResult r : executor.results.keySet())
                         if ((r.getValue() & result.getValue()) != 0)
                             executor.results.get(r).execute(result);
                     flag = true;
+                    if (exception != null)
+                        throw exception;
                     break;
                 }
             }
