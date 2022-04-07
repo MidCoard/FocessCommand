@@ -27,13 +27,17 @@ public enum CommandResult {
      */
     ARGS_EXECUTED(16),
     /**
+     * It indicates that there is an exception
+     */
+    REFUSE_EXCEPTION(32),
+    /**
      * It includes all CommandResult
      */
     ALL(ALLOW, REFUSE, COMMAND_REFUSED, ARGS, ARGS_EXECUTED),
     /**
      * It includes all negative CommandResult
      */
-    NEGATIVE(REFUSE, COMMAND_REFUSED, ARGS, ARGS_EXECUTED),
+    NEGATIVE(REFUSE, COMMAND_REFUSED, ARGS, ARGS_EXECUTED, REFUSE_EXCEPTION),
     /**
      * It includes all executed CommandResult
      */
