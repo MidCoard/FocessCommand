@@ -10,8 +10,6 @@ import java.util.Objects;
  */
 public abstract class IOHandler {
 
-    private final Object LOCK = new Object();
-
     @Nullable
     protected volatile String value;
     protected volatile boolean flag;
@@ -25,20 +23,29 @@ public abstract class IOHandler {
 
     /**
      * Used to get input String
-     *
+     * <p>
+     * Note: if there is no input String, this method will call {@link #hasInput()} and wait until there is an input String
      * @return the input String
-     * @throws InputTimeoutException if the command has waited for more than 10 minutes to get executor input string
+     * @throws InputTimeoutException if the command has waited for more than the time it expects
+     * @see #hasInput()
      */
     @NonNull
-    public String input() throws InputTimeoutException {
-        if (!this.flag)
-            this.hasInput();
-        this.flag = false;
-        synchronized (LOCK) {
+    public synchronized  String input() throws InputTimeoutException {
+        // one of the callers can get the input String
+        if (this.flag) {
+            this.flag = false;
             if (this.value == null)
                 throw new InputTimeoutException();
             // this.value cannot be null, because the change of value is synchronized
             return Objects.requireNonNull(this.value);
+        } else {
+            if (this.hasInput()) {
+                this.flag = false;
+                if (this.value == null)
+                    throw new InputTimeoutException();
+                // this.value cannot be null, because the change of value is synchronized
+                return Objects.requireNonNull(this.value);
+            } else throw new InputTimeoutException();
         }
     }
 
@@ -47,15 +54,16 @@ public abstract class IOHandler {
      *
      * @param input the inputted String
      */
-    public void input(@Nullable final String input) {
-        synchronized (LOCK) {
-            this.value = input;
-        }
+    public synchronized void input(@Nullable final String input) {
+        this.value = input;
         this.flag = true;
+        this.notify();
     }
 
     /**
      * Indicate there needs the MiraiCode of this input if it is a Mirai Message, or the string value of this input.
+     *
+     * Note: this method should not be a blocking method
      *
      * @return true if there is an input String, false otherwise
      * @see #hasInput(boolean)
@@ -70,6 +78,13 @@ public abstract class IOHandler {
      * @param flag true if you need the MiraiCode of this input when it is a Mirai Message, false if you need the string value of this input
      * @return true if there is an input String, false otherwise
      */
-    public abstract boolean hasInput(boolean flag);
+    public synchronized boolean hasInput(boolean flag) {
+        try {
+            this.wait();
+            return true;
+        } catch (InterruptedException e) {
+            return false;
+        }
+    }
 
 }
