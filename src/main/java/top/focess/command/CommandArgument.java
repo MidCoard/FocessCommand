@@ -147,9 +147,16 @@ public class CommandArgument<V> {
         else return this.getDataConverter().accept(arg);
     }
 
+    /**
+     * Put the value of the CommandArgument in the DataCollection
+     * @param dataCollection the DataCollection
+     * @param arg the value of the CommandArgument
+     * @throws IllegalArgumentException if the value is not accepted by the DataConverter
+     */
     void put(final DataCollection dataCollection, final String arg) {
         if (!this.isDefault())
-            this.getDataConverter().put(dataCollection, arg);
+            if (!this.getDataConverter().put(dataCollection, arg))
+                throw new IllegalArgumentException("The argument " + arg + " is not valid for this argument");
     }
 
 }

@@ -11,7 +11,7 @@ import top.focess.command.DataConverter;
 public abstract class ExceptionDataConverter<T> extends DataConverter<T> {
 
     @Override
-    protected boolean accept(final String arg) {
+    public boolean accept(final String arg) {
         try {
             this.convert(arg);
             return true;

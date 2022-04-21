@@ -166,6 +166,7 @@ public abstract class Command {
      * @param ioHandler the receiver
      * @return the command result
      *
+     * @throws IllegalArgumentException internal error, never expected
      * @throws Exception the exception that occurred when executing the command
      */
     public final CommandResult execute(@NotNull final CommandSender sender, @NotNull final String[] args,@NotNull IOHandler ioHandler) throws Exception {
@@ -353,6 +354,13 @@ public abstract class Command {
             return this.command;
         }
 
+        /**
+         * Check if the arguments are valid
+         *
+         * @param args the arguments of the command
+         * @return the data collection of the arguments, null if the arguments are invalid
+         * @throws IllegalArgumentException internal error, never expected
+         */
         @Nullable
         private DataCollection check(final String[] args) {
             if (args.length > this.commandArguments.length)

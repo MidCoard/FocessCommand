@@ -53,7 +53,7 @@ public abstract class DataConverter<T> {
      */
     public static final DataConverter<String> DEFAULT_DATA_CONVERTER = new DataConverter<String>() {
         @Override
-        protected boolean accept(final String arg) {
+        public boolean accept(final String arg) {
             return true;
         }
 
@@ -74,7 +74,7 @@ public abstract class DataConverter<T> {
      */
     public static final DataConverter<Integer> INTEGER_DATA_CONVERTER = new DataConverter<Integer>() {
         @Override
-        protected boolean accept(final String arg) {
+        public boolean accept(final String arg) {
             return INTEGER_PREDICATE.test(arg);
         }
 
@@ -95,7 +95,7 @@ public abstract class DataConverter<T> {
      */
     public static final DataConverter<Long> LONG_DATA_CONVERTER = new DataConverter<Long>() {
         @Override
-        protected boolean accept(final String arg) {
+        public boolean accept(final String arg) {
             return LONG_PREDICATE.test(arg);
         }
 
@@ -116,7 +116,7 @@ public abstract class DataConverter<T> {
      */
     public static final DataConverter<Double> DOUBLE_DATA_CONVERTER = new DataConverter<Double>() {
         @Override
-        protected boolean accept(final String s) {
+        public boolean accept(final String s) {
             return DOUBLE_PREDICATE.test(s);
         }
 
@@ -137,7 +137,7 @@ public abstract class DataConverter<T> {
      */
     public static final DataConverter<Boolean> BOOLEAN_DATA_CONVERTER = new DataConverter<Boolean>() {
         @Override
-        protected boolean accept(final @NotNull String arg) {
+        public boolean accept(final @NotNull String arg) {
             return arg.equalsIgnoreCase("true") || arg.equalsIgnoreCase("false");
         }
 
@@ -159,10 +159,12 @@ public abstract class DataConverter<T> {
      * @param arg the target argument in String
      * @return true if this String argument can convert to this target type, false otherwise
      */
-    protected abstract boolean accept(String arg);
+    public abstract boolean accept(String arg);
 
     /**
      * Convert String argument to target argument
+     *
+     * Note: this method is called only when {@link #accept(String)} return true
      *
      * @param arg the target argument in String
      * @return the target argument
