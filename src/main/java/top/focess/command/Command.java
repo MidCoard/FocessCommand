@@ -4,8 +4,10 @@ import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -78,8 +80,9 @@ public abstract class Command {
      * @return All commands as a list
      */
     @NotNull
+    @UnmodifiableView
     public static List<Command> getCommands() {
-        return Lists.newArrayList(COMMANDS_MAP.values());
+        return Collections.unmodifiableList(Lists.newArrayList(COMMANDS_MAP.values()));
     }
 
     /**
