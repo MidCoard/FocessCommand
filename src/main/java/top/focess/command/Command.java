@@ -202,10 +202,10 @@ public abstract class Command {
         if (this.executorPermission.test(sender)) {
             if (!flag) {
                 this.infoUsage(sender, ioHandler);
-                return CommandResult.ARGS;
+                return CommandResult.ARGS_NOT_EXECUTED;
             } else if (result == CommandResult.ARGS) {
                 this.infoUsage(sender, ioHandler);
-                return CommandResult.ARGS_EXECUTED;
+                return CommandResult.ARGS;
             }
         }
         return result;
@@ -231,7 +231,7 @@ public abstract class Command {
     public abstract void init();
 
     /**
-     * Used to get help information when execute this command with wrong arguments or the executor returns {@link CommandResult#ARGS}
+     * Used to get help information when execute this command with wrong arguments or the executor returns {@link CommandResult#ARGS_NOT_EXECUTED}
      *
      * @param sender the executor which need to get help information
      * @return the help information

@@ -21,11 +21,11 @@ public enum CommandResult {
     /**
      * It indicates that print help information to the receiver
      */
-    ARGS(8),
+    ARGS_NOT_EXECUTED(8),
     /**
      * It indicates that print help information to the receiver and the command is executed
      */
-    ARGS_EXECUTED(16),
+    ARGS(16),
     /**
      * It indicates that there is an exception, and the result of the {@link Command#execute(CommandSender, String[], IOHandler)} is {@link CommandResult#REFUSE}
      */
@@ -33,15 +33,15 @@ public enum CommandResult {
     /**
      * It includes all CommandResult
      */
-    ALL(ALLOW, REFUSE, COMMAND_REFUSED, ARGS, ARGS_EXECUTED),
+    ALL(ALLOW, REFUSE, COMMAND_REFUSED, ARGS_NOT_EXECUTED, ARGS),
     /**
      * It includes all negative CommandResult
      */
-    NEGATIVE(REFUSE, COMMAND_REFUSED, ARGS, ARGS_EXECUTED, REFUSE_EXCEPTION),
+    NEGATIVE(REFUSE, COMMAND_REFUSED, ARGS_NOT_EXECUTED, ARGS, REFUSE_EXCEPTION),
     /**
      * It includes all executed CommandResult
      */
-    EXECUTED(ALLOW,REFUSE,ARGS_EXECUTED),
+    EXECUTED(ALLOW,REFUSE, ARGS),
     /**
      * No signal
      */
