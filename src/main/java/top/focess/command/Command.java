@@ -187,7 +187,7 @@ public abstract class Command {
                     try {
                         result = executor.execute(sender, dataCollection,ioHandler);
                     } catch (final Exception e) {
-                        result = CommandResult.REFUSE;
+                        result = CommandResult.REFUSE_EXCEPTION;
                         exception = e;
                     }
                     for (final CommandResult r : executor.results.keySet())

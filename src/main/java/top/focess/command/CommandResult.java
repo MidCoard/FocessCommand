@@ -27,7 +27,7 @@ public enum CommandResult {
      */
     ARGS(16),
     /**
-     * It indicates that there is an exception, and the result of the {@link Command#execute(CommandSender, String[], IOHandler)} is {@link CommandResult#REFUSE}
+     * It indicates that there is an exception
      */
     REFUSE_EXCEPTION(32),
     /**
