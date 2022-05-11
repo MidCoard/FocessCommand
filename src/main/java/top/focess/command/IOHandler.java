@@ -61,24 +61,11 @@ public abstract class IOHandler {
     }
 
     /**
-     * Indicate there needs the MiraiCode of this input if it is a Mirai Message, or the string value of this input.
+     * Indicate there needs a message.
      *
-     * Note: this method should not be a blocking method
-     *
-     * @return true if there is an input String, false otherwise
-     * @see #hasInput(boolean)
+     * @return true if there is an input message, false otherwise
      */
     public boolean hasInput() {
-        return this.hasInput(false);
-    }
-
-    /**
-     * Indicate there needs an input String.
-     *
-     * @param flag true if you need the MiraiCode of this input when it is a Mirai Message, false if you need the string value of this input
-     * @return true if there is an input String, false otherwise
-     */
-    public synchronized boolean hasInput(boolean flag) {
         try {
             this.wait();
             return true;
