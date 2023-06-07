@@ -30,7 +30,7 @@ public abstract class IOHandler {
      * @see #hasInput()
      */
     @NonNull
-    public synchronized  String input() throws InputTimeoutException {
+    public synchronized String input() throws InputTimeoutException {
         // one of the callers can get the input String
         if (this.flag) {
             this.flag = false;
@@ -65,7 +65,7 @@ public abstract class IOHandler {
      *
      * @return true if there is an input message, false otherwise
      */
-    public boolean hasInput() {
+    public synchronized boolean hasInput() {
         try {
             this.wait();
             return true;
