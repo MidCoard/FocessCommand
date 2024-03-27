@@ -30,7 +30,7 @@ public class CommandArgument<V> {
 
     /**
      * Represent an unknown String CommandArgument
-     *
+
      * Note: this argument indicates this position need a String value.
      *
      * @return the CommandArgument representing an unknown String
@@ -43,7 +43,7 @@ public class CommandArgument<V> {
 
     /**
      * Represent an unknown Long CommandArgument
-     *
+
      * Note: this argument indicates this position need a Long value.
      *
      * @return the CommandArgument representing an unknown Long
@@ -56,7 +56,7 @@ public class CommandArgument<V> {
 
     /**
      * Represents an unknown Int CommandArgument
-     *
+
      * Note: this argument indicates this position need an Int value.
      *
      * @return the CommandArgument representing an unknown Int
@@ -69,7 +69,7 @@ public class CommandArgument<V> {
 
     /**
      * Represents an unknown CommandArgument with a specific DataConverter
-     *
+
      * Note: this argument indicates this position need a V type value
      *
      * @param defaultDataConverter the DataConverter
@@ -84,7 +84,7 @@ public class CommandArgument<V> {
 
     /**
      * Represents a CommandArgument with a specific String value
-     *
+
      * Note: this argument indicates this position is a known String value.
      *
      * @param value the String value of the CommandArgument
@@ -97,7 +97,7 @@ public class CommandArgument<V> {
 
     /**
      * Represents a CommandArgument with a specific value
-     *
+
      * Note: this argument indicates this position is a known V value.
      *
      * @param dataConverter the DataConverter
@@ -112,7 +112,7 @@ public class CommandArgument<V> {
 
     /**
      * Represents a nullable CommandArgument with a specific DataConverter
-     *
+
      * Note: this argument indicates this position is a nullable value.
      *
      * @param dataConverter the DataConverter

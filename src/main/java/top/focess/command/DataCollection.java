@@ -141,8 +141,6 @@ public class DataCollection {
     @Contract("_,!null->!null")
     public <T> T getOrDefault(final Class<T> cls, final T t) {
         try {
-            if (this.buffers.get(cls) == null)
-                throw new UnsupportedOperationException();
             return (T) this.buffers.get(cls).get();
         } catch (final Exception e) {
             return t;
@@ -162,8 +160,6 @@ public class DataCollection {
     @Contract("_,_,!null->!null")
     public <T> T getOrDefault(final Class<T> cls, final int index, final T t) {
         try {
-            if (this.buffers.get(cls) == null)
-                throw new UnsupportedOperationException();
             return (T) this.buffers.get(cls).get(index);
         } catch (final Exception e) {
             return t;
@@ -212,7 +208,7 @@ public class DataCollection {
 
     /**
      * Represents a getter for buffer.
-     *
+
      * This is a functional interface whose functional method is {@link BufferGetter#newBuffer(int)}.
      */
     @FunctionalInterface
