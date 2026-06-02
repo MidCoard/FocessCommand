@@ -32,7 +32,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <maven.compiler.release>17</maven.compiler.release>
-        <guava.version>33.4.0-jre</guava.version>
+        <guava.version>33.6.0-jre</guava.version>
         <annotations.version>24.1.0</annotations.version>
         <junit.version>5.11.3</junit.version>
     </properties>
