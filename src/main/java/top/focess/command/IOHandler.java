@@ -11,9 +11,9 @@ import java.util.Objects;
 public abstract class IOHandler {
 
     /**
-     * The maximum time (in milliseconds) {@link #input()} waits for an input String before timing out.
+     * The timeout value (in milliseconds) that indicates {@link #input(long)} should wait indefinitely.
      */
-    public static final long INPUT_TIMEOUT_MILLIS = 10 * 60 * 1000L;
+    public static final long INFINITY = 0L;
 
     @Nullable
     protected volatile String value;
@@ -29,16 +29,32 @@ public abstract class IOHandler {
     /**
      * Used to get input String
      * <p>
-     * Note: if there is no input String yet, this method blocks until one arrives or
-     * {@link #INPUT_TIMEOUT_MILLIS} elapses.
+     * Note: if there is no input String yet, this method blocks indefinitely until one arrives.
      *
      * @return the input String
-     * @throws InputTimeoutException if no input String is provided within {@link #INPUT_TIMEOUT_MILLIS}
+     * @throws InputTimeoutException if no input String is provided
+     * @see #input(long)
      * @see #hasInput()
      */
     @NotNull
     public synchronized String input() throws InputTimeoutException {
-        if (!this.flag && !this.hasInput())
+        return this.input(INFINITY);
+    }
+
+    /**
+     * Used to get input String
+     * <p>
+     * Note: if there is no input String yet, this method blocks until one arrives or the given timeout elapses.
+     *
+     * @param timeout the maximum time (in milliseconds) to wait for an input String;
+     *                {@link #INFINITY} (0) means wait indefinitely
+     * @return the input String
+     * @throws InputTimeoutException if no input String is provided within the given timeout
+     * @see #hasInput(long)
+     */
+    @NotNull
+    public synchronized String input(final long timeout) throws InputTimeoutException {
+        if (!this.flag && !this.hasInput(timeout))
             throw new InputTimeoutException();
         // one of the callers can consume the input String
         this.flag = false;
@@ -60,13 +76,31 @@ public abstract class IOHandler {
     }
 
     /**
-     * Wait until an input String is provided or the input times out.
+     * Wait indefinitely until an input String is provided.
      *
-     * @return true if an input message arrived before the timeout, false otherwise
+     * @return true if an input message arrived, false if the wait was interrupted
+     * @see #hasInput(long)
      */
     public synchronized boolean hasInput() {
-        final long deadline = System.currentTimeMillis() + INPUT_TIMEOUT_MILLIS;
+        return this.hasInput(INFINITY);
+    }
+
+    /**
+     * Wait until an input String is provided or the given timeout elapses.
+     *
+     * @param timeout the maximum time (in milliseconds) to wait for an input String;
+     *                {@link #INFINITY} (0) means wait indefinitely
+     * @return true if an input message arrived before the timeout, false otherwise
+     */
+    public synchronized boolean hasInput(final long timeout) {
         try {
+            if (timeout <= INFINITY) {
+                // guard against spurious wakeups: keep waiting until input arrives
+                while (!this.flag)
+                    this.wait();
+                return true;
+            }
+            final long deadline = System.currentTimeMillis() + timeout;
             // guard against spurious wakeups: keep waiting until input arrives or the deadline passes
             while (!this.flag) {
                 final long remaining = deadline - System.currentTimeMillis();
