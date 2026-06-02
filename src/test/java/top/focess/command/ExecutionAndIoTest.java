@@ -1,6 +1,7 @@
 package top.focess.command;
 
 import com.google.common.collect.Lists;
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -90,7 +91,7 @@ class ExecutionAndIoTest {
         }
 
         @Override
-        public List<String> usage(final CommandSender sender) {
+        public @NotNull List<String> usage(final CommandSender sender) {
             return Lists.newArrayList("boom");
         }
     }
@@ -106,7 +107,7 @@ class ExecutionAndIoTest {
         }
 
         @Override
-        public List<String> usage(final CommandSender sender) {
+        public @NotNull List<String> usage(final CommandSender sender) {
             return Lists.newArrayList("ok");
         }
     }

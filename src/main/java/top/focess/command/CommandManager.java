@@ -50,8 +50,6 @@ public class CommandManager {
      * @throws IllegalStateException     if the command is not initialized
      */
     public void register(@NotNull final Command command) {
-        if (command.getName() == null)
-            throw new IllegalStateException("CommandType does not contain name or the constructor does not super name");
         final List<String> keys = command.lookupKeys();
         for (final String key : keys)
             if (this.commandsMap.containsKey(key))
