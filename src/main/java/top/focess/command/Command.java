@@ -18,6 +18,11 @@ import java.util.function.Predicate;
 public abstract class Command {
 
 
+    /**
+     * The maximum number of usage lines combined into a single {@link IOHandler#output} message.
+     */
+    private static final int USAGE_LINES_PER_MESSAGE = 7;
+
     private final List<Executor> executors = Lists.newCopyOnWriteArrayList();
 
     /**
@@ -281,19 +286,10 @@ public abstract class Command {
      */
     private void infoUsage(final CommandSender sender, @NotNull final IOHandler ioHandler) {
         final List<String> usage = this.usage(sender);
-        int pos = 0;
-        final int targetPos = 7;
-        StringBuilder stringBuilder = null;
-        while (pos != usage.size()) {
-            if (pos % targetPos == 0) {
-                if (stringBuilder != null)
-                    ioHandler.output(stringBuilder.toString());
-                stringBuilder = new StringBuilder(usage.get(pos));
-            } else stringBuilder.append('\n').append(usage.get(pos));
-            pos++;
+        for (int start = 0; start < usage.size(); start += USAGE_LINES_PER_MESSAGE) {
+            final int end = Math.min(start + USAGE_LINES_PER_MESSAGE, usage.size());
+            ioHandler.output(String.join("\n", usage.subList(start, end)));
         }
-        if (stringBuilder != null)
-            ioHandler.output(stringBuilder.toString());
     }
 
     /**
