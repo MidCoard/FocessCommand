@@ -192,62 +192,12 @@ public abstract class Command {
     }
 
     /**
-     * Execute the command with special arguments
-     *
-     * @param sender    the executor
-     * @param args      the arguments that command spilt by spaces
-     * @param ioHandler the receiver
-     * @return the command result
-     *
-     * @throws IllegalArgumentException internal error, never expected
-     * @throws Exception the exception that occurred when executing the command
-     */
-    public final CommandResult execute(@NotNull final CommandSender sender, @NotNull final String[] args, @NotNull final IOHandler ioHandler) throws Exception {
-        if (!this.isRegistered())
-            return CommandResult.COMMAND_REFUSED;
-        if (!sender.hasPermission(this.getPermission()))
-            return CommandResult.COMMAND_REFUSED;
-        boolean flag = false;
-        CommandResult result = CommandResult.NONE;
-        for (final Executor executor : this.executors)
-            if (sender.hasPermission(executor.permission)) {
-                final DataCollection dataCollection;
-                if ((dataCollection = executor.check(args)) != null) {
-                    Exception exception = null;
-                    try {
-                        result = executor.execute(sender, dataCollection, ioHandler);
-                    } catch (final Exception e) {
-                        result = CommandResult.REFUSE_EXCEPTION;
-                        exception = e;
-                    }
-                    for (final CommandResult r : executor.results.keySet())
-                        if ((r.getValue() & result.getValue()) != 0)
-                            executor.results.get(r).execute(result);
-                    flag = true;
-                    if (exception != null)
-                        throw exception;
-                    break;
-                }
-            }
-        if (this.executorPermission.test(sender)) {
-            if (!flag) {
-                this.infoUsage(sender, ioHandler);
-                return CommandResult.ARGS_NOT_EXECUTED;
-            } else if (result == CommandResult.ARGS) {
-                this.infoUsage(sender, ioHandler);
-                return CommandResult.ARGS;
-            }
-        }
-        return result;
-    }
-
-    /**
-     * Execute the command with special arguments and return a richer {@link ExecutionResult}.
+     * Execute the command with special arguments.
      * <p>
-     * Unlike {@link #execute(CommandSender, String[], IOHandler)}, this method does not throw the
-     * exception raised by an executor; instead it captures it as a {@link CommandResult#REFUSE_EXCEPTION}
-     * result whose message is the exception message, so callers can receive richer feedback without
-     * having to catch exceptions themselves.
+     * The returned {@link ExecutionResult} pairs the {@link CommandResult} status with an optional
+     * human-readable message. This method never throws the exception raised by an executor; instead it
+     * captures it as a {@link CommandResult#REFUSE_EXCEPTION} result whose message is the exception
+     * message, so callers can receive richer feedback without having to catch exceptions themselves.
      *
      * @param sender    the executor
      * @param args      the arguments that command spilt by spaces
@@ -255,12 +205,41 @@ public abstract class Command {
      * @return the execution result, pairing the {@link CommandResult} status with an optional message
      */
     @NotNull
-    public final ExecutionResult executeResult(@NotNull final CommandSender sender, @NotNull final String[] args, @NotNull final IOHandler ioHandler) {
-        try {
-            return ExecutionResult.of(this.execute(sender, args, ioHandler));
-        } catch (final Exception e) {
-            return ExecutionResult.of(CommandResult.REFUSE_EXCEPTION, e.getMessage());
+    public final ExecutionResult execute(@NotNull final CommandSender sender, @NotNull final String[] args, @NotNull final IOHandler ioHandler) {
+        if (!this.isRegistered())
+            return ExecutionResult.of(CommandResult.COMMAND_REFUSED);
+        if (!sender.hasPermission(this.getPermission()))
+            return ExecutionResult.of(CommandResult.COMMAND_REFUSED);
+        boolean flag = false;
+        CommandResult result = CommandResult.NONE;
+        String message = null;
+        for (final Executor executor : this.executors)
+            if (sender.hasPermission(executor.permission)) {
+                final DataCollection dataCollection;
+                if ((dataCollection = executor.check(args)) != null) {
+                    try {
+                        result = executor.execute(sender, dataCollection, ioHandler);
+                    } catch (final Exception e) {
+                        result = CommandResult.REFUSE_EXCEPTION;
+                        message = e.getMessage();
+                    }
+                    for (final CommandResult r : executor.results.keySet())
+                        if ((r.getValue() & result.getValue()) != 0)
+                            executor.results.get(r).execute(result);
+                    flag = true;
+                    break;
+                }
+            }
+        if (this.executorPermission.test(sender)) {
+            if (!flag) {
+                this.infoUsage(sender, ioHandler);
+                return ExecutionResult.of(CommandResult.ARGS_NOT_EXECUTED);
+            } else if (result == CommandResult.ARGS) {
+                this.infoUsage(sender, ioHandler);
+                return ExecutionResult.of(CommandResult.ARGS);
+            }
         }
+        return ExecutionResult.of(result, message);
     }
 
     @NotNull
@@ -291,7 +270,16 @@ public abstract class Command {
     @NotNull
     public abstract List<String> usage(CommandSender sender);
 
-    public final void infoUsage(final CommandSender sender, @NotNull final IOHandler ioHandler) {
+    /**
+     * Print the help information to the receiver.
+     * <p>
+     * This is only invoked when the command returns {@link CommandResult#ARGS} or
+     * {@link CommandResult#ARGS_NOT_EXECUTED}, to guide the sender towards the correct usage.
+     *
+     * @param sender    the executor which needs to get help information
+     * @param ioHandler the receiver the usage is printed to
+     */
+    private void infoUsage(final CommandSender sender, @NotNull final IOHandler ioHandler) {
         final List<String> usage = this.usage(sender);
         int pos = 0;
         final int targetPos = 7;

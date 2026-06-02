@@ -221,13 +221,13 @@ public class DataCollection {
      * @param name the name of the argument
      * @param <T>  the argument type
      * @return the named argument value
-     * @throws UnsupportedOperationException if no argument is registered under that name
+     * @throws IllegalArgumentException if no argument is registered under that name
      */
     @SuppressWarnings("unchecked")
     @NotNull
     public <T> T get(@NotNull final String name) {
         if (!this.namedValues.containsKey(name))
-            throw new UnsupportedOperationException();
+            throw new IllegalArgumentException("No argument registered under name: " + name);
         return (T) this.namedValues.get(name);
     }
 

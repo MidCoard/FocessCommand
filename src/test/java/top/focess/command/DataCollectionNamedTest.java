@@ -34,7 +34,7 @@ class DataCollectionNamedTest {
         CommandArgument.ofString().named("present").put(collection, "value");
         collection.flip();
 
-        assertThrows(UnsupportedOperationException.class, () -> collection.get("absent"));
+        assertThrows(IllegalArgumentException.class, () -> collection.get("absent"));
         assertEquals("fallback", collection.getOrDefault("absent", "fallback"));
         assertEquals("value", collection.getOrDefault("present", "fallback"));
     }

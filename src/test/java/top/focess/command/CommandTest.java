@@ -57,43 +57,43 @@ class CommandTest {
     }
 
     @Test
-    void executesMatchingArguments() throws Exception {
+    void executesMatchingArguments() {
         final Command command = new EchoCommand();
         Command.register(command);
 
-        final CommandResult result = command.execute(sender, new String[]{"hello"}, ioHandler);
+        final ExecutionResult result = command.execute(sender, new String[]{"hello"}, ioHandler);
 
-        assertEquals(CommandResult.ALLOW, result);
+        assertEquals(CommandResult.ALLOW, result.getResult());
         assertEquals(Lists.newArrayList("hello"), ioHandler.outputs);
     }
 
     @Test
-    void unmatchedArgumentsPrintUsage() throws Exception {
+    void unmatchedArgumentsPrintUsage() {
         final Command command = new AddCommand();
         Command.register(command);
 
-        final CommandResult result = command.execute(sender, new String[]{"add", "not-a-number"}, ioHandler);
+        final ExecutionResult result = command.execute(sender, new String[]{"add", "not-a-number"}, ioHandler);
 
-        assertEquals(CommandResult.ARGS_NOT_EXECUTED, result);
+        assertEquals(CommandResult.ARGS_NOT_EXECUTED, result.getResult());
         assertEquals(Lists.newArrayList("add <number>"), ioHandler.outputs);
     }
 
     @Test
-    void typedArgumentsAreParsed() throws Exception {
+    void typedArgumentsAreParsed() {
         final Command command = new AddCommand();
         Command.register(command);
 
-        final CommandResult result = command.execute(sender, new String[]{"add", "5"}, ioHandler);
+        final ExecutionResult result = command.execute(sender, new String[]{"add", "5"}, ioHandler);
 
-        assertEquals(CommandResult.ALLOW, result);
+        assertEquals(CommandResult.ALLOW, result.getResult());
         assertEquals(Lists.newArrayList("5"), ioHandler.outputs);
     }
 
     @Test
-    void unregisteredCommandIsRefused() throws Exception {
+    void unregisteredCommandIsRefused() {
         final Command command = new EchoCommand();
-        final CommandResult result = command.execute(sender, new String[]{"hello"}, ioHandler);
-        assertEquals(CommandResult.COMMAND_REFUSED, result);
+        final ExecutionResult result = command.execute(sender, new String[]{"hello"}, ioHandler);
+        assertEquals(CommandResult.COMMAND_REFUSED, result.getResult());
     }
 
     private static final class EchoCommand extends Command {

@@ -27,11 +27,11 @@ class ExecutionAndIoTest {
     }
 
     @Test
-    void executeResultCapturesExceptionMessageWithoutThrowing() {
+    void executeCapturesExceptionMessageWithoutThrowing() {
         final Command command = new BoomCommand();
         Command.register(command);
 
-        final ExecutionResult result = command.executeResult(sender, new String[]{"boom"}, ioHandler);
+        final ExecutionResult result = command.execute(sender, new String[]{"boom"}, ioHandler);
 
         assertEquals(CommandResult.REFUSE_EXCEPTION, result.getResult());
         assertEquals("kaboom", result.getMessage().orElse(null));
@@ -39,11 +39,11 @@ class ExecutionAndIoTest {
     }
 
     @Test
-    void executeResultWrapsSuccess() {
+    void executeWrapsSuccess() {
         final Command command = new OkCommand();
         Command.register(command);
 
-        final ExecutionResult result = command.executeResult(sender, new String[]{"ok"}, ioHandler);
+        final ExecutionResult result = command.execute(sender, new String[]{"ok"}, ioHandler);
 
         assertEquals(CommandResult.ALLOW, result.getResult());
         assertTrue(result.isExecuted());
