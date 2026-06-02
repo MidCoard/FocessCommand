@@ -1,6 +1,6 @@
 package top.focess.command.data;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * A buffer which stores data
@@ -26,7 +26,7 @@ public abstract class DataBuffer<T> {
      *
      * @return element in the buffer in order
      */
-    @NonNull
+    @NotNull
     public abstract T get();
 
     /**
@@ -35,6 +35,6 @@ public abstract class DataBuffer<T> {
      * @param index the element index
      * @return element in the index of the buffer
      */
-    @NonNull
+    @NotNull
     public abstract T get(int index);
 }

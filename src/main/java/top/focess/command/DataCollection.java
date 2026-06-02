@@ -1,7 +1,6 @@
 package top.focess.command;
 
 import com.google.common.collect.Maps;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import top.focess.command.data.*;
@@ -26,6 +25,8 @@ public class DataCollection {
     }
 
     private final Map<Class<?>, DataBuffer> buffers = Maps.newHashMap();
+
+    private final Map<String, Object> namedValues = Maps.newHashMap();
 
     /**
      * Initialize the DataCollection with fixed size.
@@ -84,7 +85,7 @@ public class DataCollection {
      * @return the String argument in order
      * @throws NullPointerException if the value is null
      */
-    @NonNull
+    @NotNull
     public String get() {
         return Objects.requireNonNull(this.get(String.class));
     }
@@ -138,6 +139,7 @@ public class DataCollection {
      * @return the buffer element
      * @throws UnsupportedOperationException if the buffer is not registered
      */
+    @SuppressWarnings("unchecked")
     @Contract("_,!null->!null")
     public <T> T getOrDefault(final Class<T> cls, final T t) {
         try {
@@ -157,6 +159,7 @@ public class DataCollection {
      * @return the buffer element
      * @throws UnsupportedOperationException if the buffer is not registered
      */
+    @SuppressWarnings("unchecked")
     @Contract("_,_,!null->!null")
     public <T> T getOrDefault(final Class<T> cls, final int index, final T t) {
         try {
@@ -183,6 +186,7 @@ public class DataCollection {
      * @return the buffer element
      * @throws UnsupportedOperationException if the buffer is not registered
      */
+    @SuppressWarnings("unchecked")
     @NotNull
     public <T> T get(final Class<T> c) {
         if (this.buffers.get(c) == null)
@@ -199,11 +203,48 @@ public class DataCollection {
      * @return the buffer element
      * @throws UnsupportedOperationException if the buffer is not registered
      */
+    @SuppressWarnings("unchecked")
     @NotNull
     public <T> T get(final Class<T> c, final int index) {
         if (this.buffers.get(c) == null)
             throw new UnsupportedOperationException();
         return (T) this.buffers.get(c).get(index);
+    }
+
+    void writeNamed(@NotNull final String name, final Object value) {
+        this.namedValues.put(name, value);
+    }
+
+    /**
+     * Get a parsed argument by the name assigned via {@link CommandArgument#named(String)}.
+     *
+     * @param name the name of the argument
+     * @param <T>  the argument type
+     * @return the named argument value
+     * @throws IllegalArgumentException if no argument is registered under that name
+     */
+    @SuppressWarnings("unchecked")
+    @NotNull
+    public <T> T get(@NotNull final String name) {
+        if (!this.namedValues.containsKey(name))
+            throw new IllegalArgumentException("No argument registered under name: " + name);
+        return (T) this.namedValues.get(name);
+    }
+
+    /**
+     * Get a parsed argument by name, falling back to a default value if absent.
+     *
+     * @param name the name of the argument
+     * @param t    the default value
+     * @param <T>  the argument type
+     * @return the named argument value, or the default value if no argument has that name
+     */
+    @SuppressWarnings("unchecked")
+    @Contract("_,!null->!null")
+    public <T> T getOrDefault(@NotNull final String name, final T t) {
+        if (!this.namedValues.containsKey(name))
+            return t;
+        return (T) this.namedValues.get(name);
     }
 
     /**

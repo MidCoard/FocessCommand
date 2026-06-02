@@ -1,14 +1,21 @@
 package top.focess.command;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 /**
  * This class is used to handle input and output when executing Command.
  */
 public abstract class IOHandler {
+
+    /**
+     * The timeout value (in milliseconds) that indicates {@link #input(long)} should wait indefinitely.
+     */
+    public static final long INFINITY = 0L;
 
     @Nullable
     protected volatile String value;
@@ -24,29 +31,39 @@ public abstract class IOHandler {
     /**
      * Used to get input String
      * <p>
-     * Note: if there is no input String, this method will call {@link #hasInput()} and wait until there is an input String
+     * Note: if there is no input String yet, this method blocks indefinitely until one arrives.
+     *
      * @return the input String
-     * @throws InputTimeoutException if the command has waited for more than the time it expects
+     * @throws InputTimeoutException if no input String is provided
+     * @see #input(long)
      * @see #hasInput()
      */
-    @NonNull
+    @NotNull
     public synchronized String input() throws InputTimeoutException {
-        // one of the callers can get the input String
-        if (this.flag) {
-            this.flag = false;
-            if (this.value == null)
-                throw new InputTimeoutException();
-            // this.value cannot be null, because the change of value is synchronized
-            return Objects.requireNonNull(this.value);
-        } else {
-            if (this.hasInput()) {
-                this.flag = false;
-                if (this.value == null)
-                    throw new InputTimeoutException();
-                // this.value cannot be null, because the change of value is synchronized
-                return Objects.requireNonNull(this.value);
-            } else throw new InputTimeoutException();
-        }
+        return this.input(INFINITY);
+    }
+
+    /**
+     * Used to get input String
+     * <p>
+     * Note: if there is no input String yet, this method blocks until one arrives or the given timeout elapses.
+     *
+     * @param timeout the maximum time (in milliseconds) to wait for an input String;
+     *                {@link #INFINITY} (0) means wait indefinitely
+     * @return the input String
+     * @throws InputTimeoutException if no input String is provided within the given timeout
+     * @see #hasInput(long)
+     */
+    @NotNull
+    public synchronized String input(final long timeout) throws InputTimeoutException {
+        if (!this.flag && !this.hasInput(timeout))
+            throw new InputTimeoutException();
+        // one of the callers can consume the input String
+        this.flag = false;
+        if (this.value == null)
+            throw new InputTimeoutException();
+        // this.value cannot be null, because the change of value is synchronized
+        return Objects.requireNonNull(this.value);
     }
 
     /**
@@ -57,19 +74,79 @@ public abstract class IOHandler {
     public synchronized void input(@Nullable final String input) {
         this.value = input;
         this.flag = true;
-        this.notify();
+        this.notifyAll();
     }
 
     /**
-     * Indicate there needs a message.
+     * Asynchronously get an input String without blocking the calling thread.
+     * <p>
+     * The returned future waits indefinitely until an input String arrives.
      *
-     * @return true if there is an input message, false otherwise
+     * @return a future that completes with the input String, or completes exceptionally with an
+     *         {@link InputTimeoutException} (wrapped in a {@link CompletionException}) if no input is provided
+     * @see #inputAsync(long)
+     */
+    @NotNull
+    public CompletableFuture<String> inputAsync() {
+        return this.inputAsync(INFINITY);
+    }
+
+    /**
+     * Asynchronously get an input String without blocking the calling thread.
+     *
+     * @param timeout the maximum time (in milliseconds) to wait for an input String;
+     *                {@link #INFINITY} (0) means wait indefinitely
+     * @return a future that completes with the input String, or completes exceptionally with an
+     *         {@link InputTimeoutException} (wrapped in a {@link CompletionException}) if no input is provided
+     *         within the given timeout
+     */
+    @NotNull
+    public CompletableFuture<String> inputAsync(final long timeout) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return this.input(timeout);
+            } catch (final InputTimeoutException e) {
+                throw new CompletionException(e);
+            }
+        });
+    }
+
+    /**
+     * Wait indefinitely until an input String is provided.
+     *
+     * @return true if an input message arrived, false if the wait was interrupted
+     * @see #hasInput(long)
      */
     public synchronized boolean hasInput() {
+        return this.hasInput(INFINITY);
+    }
+
+    /**
+     * Wait until an input String is provided or the given timeout elapses.
+     *
+     * @param timeout the maximum time (in milliseconds) to wait for an input String;
+     *                {@link #INFINITY} (0) means wait indefinitely
+     * @return true if an input message arrived before the timeout, false otherwise
+     */
+    public synchronized boolean hasInput(final long timeout) {
         try {
-            this.wait();
+            if (timeout <= INFINITY) {
+                // guard against spurious wakeups: keep waiting until input arrives
+                while (!this.flag)
+                    this.wait();
+                return true;
+            }
+            final long deadline = System.currentTimeMillis() + timeout;
+            // guard against spurious wakeups: keep waiting until input arrives or the deadline passes
+            while (!this.flag) {
+                final long remaining = deadline - System.currentTimeMillis();
+                if (remaining <= 0)
+                    return false;
+                this.wait(remaining);
+            }
             return true;
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
             return false;
         }
     }

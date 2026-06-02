@@ -4,6 +4,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.function.Predicate;
+import java.util.regex.Pattern;
 
 /**
  * This class used to convert String data to target T type data.
@@ -13,37 +14,61 @@ import java.util.function.Predicate;
 public abstract class DataConverter<T> {
 
     /**
-     * It is a Predicate used to predicate a String is an Integer
+     * Matches an optionally-signed sequence of digits (a candidate integral value).
+     */
+    private static final Pattern INTEGRAL_PATTERN = Pattern.compile("[+-]?\\d+");
+
+    /**
+     * Matches a candidate floating-point value (decimal or scientific notation).
+     */
+    private static final Pattern DECIMAL_PATTERN = Pattern.compile("[+-]?(?:\\d+\\.?\\d*|\\.\\d+)(?:[eE][+-]?\\d+)?[fFdD]?");
+
+    /**
+     * It is a Predicate used to predicate a String is an Integer.
+     * <p>
+     * The regex is only a fast pre-filter; {@link Integer#parseInt(String)} remains the basis so that
+     * out-of-range values (which match the regex but overflow) are still rejected.
      */
     public static final Predicate<String> INTEGER_PREDICATE = i -> {
+        if (i == null || !INTEGRAL_PATTERN.matcher(i).matches())
+            return false;
         try {
             Integer.parseInt(i);
             return true;
-        } catch (Exception e) {
+        } catch (final NumberFormatException e) {
             return false;
         }
     };
 
     /**
-     * It is a Predicate used to predicate a String is a Double
+     * It is a Predicate used to predicate a String is a Double.
+     * <p>
+     * The regex is only a fast pre-filter; {@link Double#parseDouble(String)} remains the basis.
      */
     public static final Predicate<String> DOUBLE_PREDICATE = i -> {
+        if (i == null || !DECIMAL_PATTERN.matcher(i).matches())
+            return false;
         try {
             Double.parseDouble(i);
             return true;
-        } catch (Exception e) {
+        } catch (final NumberFormatException e) {
             return false;
         }
     };
 
     /**
-     * It is a Predicate used to predicate a String is a Long
+     * It is a Predicate used to predicate a String is a Long.
+     * <p>
+     * The regex is only a fast pre-filter; {@link Long#parseLong(String)} remains the basis so that
+     * out-of-range values (which match the regex but overflow) are still rejected.
      */
     public static final Predicate<String> LONG_PREDICATE = i -> {
+        if (i == null || !INTEGRAL_PATTERN.matcher(i).matches())
+            return false;
         try {
             Long.parseLong(i);
             return true;
-        } catch (Exception e) {
+        } catch (final NumberFormatException e) {
             return false;
         }
     };

@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -19,7 +18,10 @@ import java.util.function.Predicate;
 public abstract class Command {
 
 
-    private static final Map<String, Command> COMMANDS_MAP = Maps.newConcurrentMap();
+    /**
+     * The maximum number of usage lines combined into a single {@link IOHandler#output} message.
+     */
+    private static final int USAGE_LINES_PER_MESSAGE = 7;
 
     private final List<Executor> executors = Lists.newCopyOnWriteArrayList();
 
@@ -33,9 +35,10 @@ public abstract class Command {
     private final List<String> aliases;
 
     /**
-     * Indicate whether the command is registered or not
+     * The manager this command is currently registered with, or null if it is not registered.
      */
-    private boolean registered;
+    @Nullable
+    private CommandManager manager;
 
     /**
      * The MiraiPermission of the command
@@ -67,55 +70,87 @@ public abstract class Command {
     }
 
     /**
-     * Unregister all commands
+     * Unregister all commands from the default {@link CommandManager}
      */
     public static void unregisterAll() {
-        for (final Command command : COMMANDS_MAP.values())
-            command.unregister();
+        CommandManager.getDefault().unregisterAll();
     }
 
     /**
-     * Get all commands
+     * Get all commands registered in the default {@link CommandManager}
      *
      * @return All commands as a list
      */
     @NotNull
     @UnmodifiableView
     public static List<Command> getCommands() {
-        return Collections.unmodifiableList(Lists.newArrayList(COMMANDS_MAP.values()));
+        return CommandManager.getDefault().getCommands();
     }
 
     /**
-     * Register the command
+     * Get a registered command by its name or one of its aliases (case-insensitive)
+     * from the default {@link CommandManager}.
+     *
+     * @param name the name or alias of the command
+     * @return the matching command, or null if none is registered under that key
+     */
+    @Nullable
+    public static Command get(@NotNull final String name) {
+        return CommandManager.getDefault().get(name);
+    }
+
+    /**
+     * Register the command in the default {@link CommandManager}
      *
      * @param command the command that need to be registered
-     * @throws CommandDuplicateException if the command name already exists in the registered commands
-     * @throws IllegalStateException    if the command is not initialized
+     * @throws CommandDuplicateException if the command name or any alias already exists in the registered commands
+     * @throws IllegalStateException     if the command is not initialized
      */
     public static void register(@NotNull final Command command) {
-        if (command.name == null)
-            throw new IllegalStateException("CommandType does not contain name or the constructor does not super name");
-        List<String> commandNames = Lists.newArrayList(command.getName());
-        commandNames.addAll(command.getAliases());
-        for (final String commandName : commandNames)
-            for (Map.Entry<String,Command> entry : COMMANDS_MAP.entrySet())
-                if (entry.getKey().equalsIgnoreCase(commandName) || entry.getValue().getAliases().stream().anyMatch(alias -> alias.equalsIgnoreCase(commandName)))
-                    throw new CommandDuplicateException(commandName);
-        command.registered = true;
-        COMMANDS_MAP.put(command.getName(), command);
+        CommandManager.getDefault().register(command);
     }
 
     public boolean isRegistered() {
-        return this.registered;
+        return this.manager != null;
     }
 
     /**
-     * Unregister this command
+     * Unregister this command from the manager it is registered with.
      */
     public void unregister() {
-        this.registered = false;
+        final CommandManager current = this.manager;
         this.executors.clear();
-        COMMANDS_MAP.remove(this.getName());
+        if (current != null)
+            current.unregister(this);
+    }
+
+    /**
+     * Mark this command as registered with the given manager.
+     *
+     * @param manager the manager this command is registered with
+     */
+    void setManager(@NotNull final CommandManager manager) {
+        this.manager = manager;
+    }
+
+    /**
+     * Mark this command as unregistered.
+     */
+    void clearManager() {
+        this.manager = null;
+    }
+
+    /**
+     * The lower-cased lookup keys (name and aliases) of this command.
+     *
+     * @return the lookup keys
+     */
+    @NotNull
+    List<String> lookupKeys() {
+        final List<String> keys = Lists.newArrayList(this.name.toLowerCase());
+        for (final String alias : this.aliases)
+            keys.add(alias.toLowerCase());
+        return keys;
     }
 
     @NotNull
@@ -162,53 +197,54 @@ public abstract class Command {
     }
 
     /**
-     * Execute the command with special arguments
+     * Execute the command with special arguments.
+     * <p>
+     * The returned {@link ExecutionResult} pairs the {@link CommandResult} status with an optional
+     * human-readable message. This method never throws the exception raised by an executor; instead it
+     * captures it as a {@link CommandResult#REFUSE_EXCEPTION} result whose message is the exception
+     * message, so callers can receive richer feedback without having to catch exceptions themselves.
      *
      * @param sender    the executor
      * @param args      the arguments that command spilt by spaces
      * @param ioHandler the receiver
-     * @return the command result
-     *
-     * @throws IllegalArgumentException internal error, never expected
-     * @throws Exception the exception that occurred when executing the command
+     * @return the execution result, pairing the {@link CommandResult} status with an optional message
      */
-    public final CommandResult execute(@NotNull final CommandSender sender, @NotNull final String[] args,@NotNull IOHandler ioHandler) throws Exception {
+    @NotNull
+    public final ExecutionResult execute(@NotNull final CommandSender sender, @NotNull final String[] args, @NotNull final IOHandler ioHandler) {
         if (!this.isRegistered())
-            return CommandResult.COMMAND_REFUSED;
+            return ExecutionResult.of(CommandResult.COMMAND_REFUSED);
         if (!sender.hasPermission(this.getPermission()))
-            return CommandResult.COMMAND_REFUSED;
+            return ExecutionResult.of(CommandResult.COMMAND_REFUSED);
         boolean flag = false;
         CommandResult result = CommandResult.NONE;
+        String message = null;
         for (final Executor executor : this.executors)
             if (sender.hasPermission(executor.permission)) {
                 final DataCollection dataCollection;
                 if ((dataCollection = executor.check(args)) != null) {
-                    Exception exception = null;
                     try {
-                        result = executor.execute(sender, dataCollection,ioHandler);
+                        result = executor.execute(sender, dataCollection, ioHandler);
                     } catch (final Exception e) {
                         result = CommandResult.REFUSE_EXCEPTION;
-                        exception = e;
+                        message = e.getMessage();
                     }
                     for (final CommandResult r : executor.results.keySet())
                         if ((r.getValue() & result.getValue()) != 0)
                             executor.results.get(r).execute(result);
                     flag = true;
-                    if (exception != null)
-                        throw exception;
                     break;
                 }
             }
         if (this.executorPermission.test(sender)) {
             if (!flag) {
                 this.infoUsage(sender, ioHandler);
-                return CommandResult.ARGS_NOT_EXECUTED;
+                return ExecutionResult.of(CommandResult.ARGS_NOT_EXECUTED);
             } else if (result == CommandResult.ARGS) {
                 this.infoUsage(sender, ioHandler);
-                return CommandResult.ARGS;
+                return ExecutionResult.of(CommandResult.ARGS);
             }
         }
-        return result;
+        return ExecutionResult.of(result, message);
     }
 
     @NotNull
@@ -239,21 +275,21 @@ public abstract class Command {
     @NotNull
     public abstract List<String> usage(CommandSender sender);
 
-    public final void infoUsage(final CommandSender sender, @NotNull IOHandler ioHandler) {
+    /**
+     * Print the help information to the receiver.
+     * <p>
+     * This is only invoked when the command returns {@link CommandResult#ARGS} or
+     * {@link CommandResult#ARGS_NOT_EXECUTED}, to guide the sender towards the correct usage.
+     *
+     * @param sender    the executor which needs to get help information
+     * @param ioHandler the receiver the usage is printed to
+     */
+    private void infoUsage(final CommandSender sender, @NotNull final IOHandler ioHandler) {
         final List<String> usage = this.usage(sender);
-        int pos = 0;
-        final int targetPos = 7;
-        StringBuilder stringBuilder = null;
-        while (pos != usage.size()) {
-            if (pos % targetPos == 0) {
-                if (stringBuilder != null)
-                    ioHandler.output(stringBuilder.toString());
-                stringBuilder = new StringBuilder(usage.get(pos));
-            } else stringBuilder.append('\n').append(usage.get(pos));
-            pos++;
+        for (int start = 0; start < usage.size(); start += USAGE_LINES_PER_MESSAGE) {
+            final int end = Math.min(start + USAGE_LINES_PER_MESSAGE, usage.size());
+            ioHandler.output(String.join("\n", usage.subList(start, end)));
         }
-        if (stringBuilder != null)
-            ioHandler.output(stringBuilder.toString());
     }
 
     /**
@@ -277,10 +313,10 @@ public abstract class Command {
             this.nullableCommandArguments = (int) Arrays.stream(commandArguments).filter(CommandArgument::isNullable).count();
         }
 
-        private CommandResult execute(final CommandSender sender, final DataCollection dataCollection, @NotNull IOHandler ioHandler) {
+        private CommandResult execute(final CommandSender sender, final DataCollection dataCollection, @NotNull final IOHandler ioHandler) {
             if (!this.executorPermission.test(sender))
                 return CommandResult.REFUSE;
-            return this.executor.execute(sender, dataCollection,ioHandler);
+            return this.executor.execute(sender, dataCollection, ioHandler);
         }
 
 
