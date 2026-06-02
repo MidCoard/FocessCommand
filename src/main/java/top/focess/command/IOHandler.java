@@ -4,6 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 
 /**
  * This class is used to handle input and output when executing Command.
@@ -73,6 +75,40 @@ public abstract class IOHandler {
         this.value = input;
         this.flag = true;
         this.notifyAll();
+    }
+
+    /**
+     * Asynchronously get an input String without blocking the calling thread.
+     * <p>
+     * The returned future waits indefinitely until an input String arrives.
+     *
+     * @return a future that completes with the input String, or completes exceptionally with an
+     *         {@link InputTimeoutException} (wrapped in a {@link CompletionException}) if no input is provided
+     * @see #inputAsync(long)
+     */
+    @NotNull
+    public CompletableFuture<String> inputAsync() {
+        return this.inputAsync(INFINITY);
+    }
+
+    /**
+     * Asynchronously get an input String without blocking the calling thread.
+     *
+     * @param timeout the maximum time (in milliseconds) to wait for an input String;
+     *                {@link #INFINITY} (0) means wait indefinitely
+     * @return a future that completes with the input String, or completes exceptionally with an
+     *         {@link InputTimeoutException} (wrapped in a {@link CompletionException}) if no input is provided
+     *         within the given timeout
+     */
+    @NotNull
+    public CompletableFuture<String> inputAsync(final long timeout) {
+        return CompletableFuture.supplyAsync(() -> {
+            try {
+                return this.input(timeout);
+            } catch (final InputTimeoutException e) {
+                throw new CompletionException(e);
+            }
+        });
     }
 
     /**

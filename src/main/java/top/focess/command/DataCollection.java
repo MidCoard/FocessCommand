@@ -26,6 +26,8 @@ public class DataCollection {
 
     private final Map<Class<?>, DataBuffer> buffers = Maps.newHashMap();
 
+    private final Map<String, Object> namedValues = Maps.newHashMap();
+
     /**
      * Initialize the DataCollection with fixed size.
      *
@@ -207,6 +209,42 @@ public class DataCollection {
         if (this.buffers.get(c) == null)
             throw new UnsupportedOperationException();
         return (T) this.buffers.get(c).get(index);
+    }
+
+    void writeNamed(@NotNull final String name, final Object value) {
+        this.namedValues.put(name, value);
+    }
+
+    /**
+     * Get a parsed argument by the name assigned via {@link CommandArgument#named(String)}.
+     *
+     * @param name the name of the argument
+     * @param <T>  the argument type
+     * @return the named argument value
+     * @throws UnsupportedOperationException if no argument is registered under that name
+     */
+    @SuppressWarnings("unchecked")
+    @NotNull
+    public <T> T get(@NotNull final String name) {
+        if (!this.namedValues.containsKey(name))
+            throw new UnsupportedOperationException();
+        return (T) this.namedValues.get(name);
+    }
+
+    /**
+     * Get a parsed argument by name, falling back to a default value if absent.
+     *
+     * @param name the name of the argument
+     * @param t    the default value
+     * @param <T>  the argument type
+     * @return the named argument value, or the default value if no argument has that name
+     */
+    @SuppressWarnings("unchecked")
+    @Contract("_,!null->!null")
+    public <T> T getOrDefault(@NotNull final String name, final T t) {
+        if (!this.namedValues.containsKey(name))
+            return t;
+        return (T) this.namedValues.get(name);
     }
 
     /**

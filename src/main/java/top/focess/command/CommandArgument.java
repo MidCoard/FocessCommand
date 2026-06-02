@@ -15,6 +15,8 @@ public class CommandArgument<V> {
     private final DataConverter<V> dataConverter;
     private final V value;
     private final boolean isNullable;
+    @Nullable
+    private String name;
 
     private CommandArgument(@NotNull final DataConverter<V> dataConverter, @Nullable final V value) {
         this.dataConverter = dataConverter;
@@ -128,6 +130,25 @@ public class CommandArgument<V> {
         return this.isNullable;
     }
 
+    /**
+     * Assign a name to this argument so that its parsed value can be looked up by name from the
+     * {@link DataCollection} (via {@link DataCollection#get(String)}), in addition to positional/typed
+     * access. Naming is ignored for fixed-literal arguments (created from a known value).
+     *
+     * @param name the name of the argument
+     * @return this argument, for chaining
+     */
+    @NotNull
+    public CommandArgument<V> named(@NotNull final String name) {
+        this.name = name;
+        return this;
+    }
+
+    @Nullable
+    String getName() {
+        return this.name;
+    }
+
     boolean isDefault() {
         return this.value != null;
     }
@@ -157,6 +178,8 @@ public class CommandArgument<V> {
         if (!this.isDefault())
             if (!this.getDataConverter().put(dataCollection, arg))
                 throw new IllegalArgumentException("The argument " + arg + " is not valid for this argument");
+        if (this.name != null && this.getDataConverter().accept(arg))
+            dataCollection.writeNamed(this.name, this.getDataConverter().convert(arg));
     }
 
 }

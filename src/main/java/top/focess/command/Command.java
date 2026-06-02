@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
@@ -18,16 +17,6 @@ import java.util.function.Predicate;
  */
 public abstract class Command {
 
-
-    /**
-     * Lookup map keyed by lower-cased command name and aliases.
-     */
-    private static final Map<String, Command> COMMANDS_MAP = Maps.newConcurrentMap();
-
-    /**
-     * All currently registered commands (each command appears once).
-     */
-    private static final List<Command> COMMANDS = Lists.newCopyOnWriteArrayList();
 
     private final List<Executor> executors = Lists.newCopyOnWriteArrayList();
 
@@ -41,9 +30,10 @@ public abstract class Command {
     private final List<String> aliases;
 
     /**
-     * Indicate whether the command is registered or not
+     * The manager this command is currently registered with, or null if it is not registered.
      */
-    private boolean registered;
+    @Nullable
+    private CommandManager manager;
 
     /**
      * The MiraiPermission of the command
@@ -75,68 +65,74 @@ public abstract class Command {
     }
 
     /**
-     * Unregister all commands
+     * Unregister all commands from the default {@link CommandManager}
      */
     public static void unregisterAll() {
-        for (final Command command : Lists.newArrayList(COMMANDS))
-            command.unregister();
+        CommandManager.getDefault().unregisterAll();
     }
 
     /**
-     * Get all commands
+     * Get all commands registered in the default {@link CommandManager}
      *
      * @return All commands as a list
      */
     @NotNull
     @UnmodifiableView
     public static List<Command> getCommands() {
-        return Collections.unmodifiableList(Lists.newArrayList(COMMANDS));
+        return CommandManager.getDefault().getCommands();
     }
 
     /**
-     * Get a registered command by its name or one of its aliases (case-insensitive).
+     * Get a registered command by its name or one of its aliases (case-insensitive)
+     * from the default {@link CommandManager}.
      *
      * @param name the name or alias of the command
      * @return the matching command, or null if none is registered under that key
      */
     @Nullable
     public static Command get(@NotNull final String name) {
-        return COMMANDS_MAP.get(name.toLowerCase());
+        return CommandManager.getDefault().get(name);
     }
 
     /**
-     * Register the command
+     * Register the command in the default {@link CommandManager}
      *
      * @param command the command that need to be registered
      * @throws CommandDuplicateException if the command name or any alias already exists in the registered commands
      * @throws IllegalStateException     if the command is not initialized
      */
     public static void register(@NotNull final Command command) {
-        if (command.name == null)
-            throw new IllegalStateException("CommandType does not contain name or the constructor does not super name");
-        final List<String> keys = command.lookupKeys();
-        for (final String key : keys)
-            if (COMMANDS_MAP.containsKey(key))
-                throw new CommandDuplicateException(key);
-        for (final String key : keys)
-            COMMANDS_MAP.put(key, command);
-        COMMANDS.add(command);
-        command.registered = true;
+        CommandManager.getDefault().register(command);
     }
 
     public boolean isRegistered() {
-        return this.registered;
+        return this.manager != null;
     }
 
     /**
-     * Unregister this command
+     * Unregister this command from the manager it is registered with.
      */
     public void unregister() {
-        this.registered = false;
+        final CommandManager current = this.manager;
         this.executors.clear();
-        for (final String key : this.lookupKeys())
-            COMMANDS_MAP.remove(key, this);
-        COMMANDS.remove(this);
+        if (current != null)
+            current.unregister(this);
+    }
+
+    /**
+     * Mark this command as registered with the given manager.
+     *
+     * @param manager the manager this command is registered with
+     */
+    void setManager(@NotNull final CommandManager manager) {
+        this.manager = manager;
+    }
+
+    /**
+     * Mark this command as unregistered.
+     */
+    void clearManager() {
+        this.manager = null;
     }
 
     /**
@@ -145,7 +141,7 @@ public abstract class Command {
      * @return the lookup keys
      */
     @NotNull
-    private List<String> lookupKeys() {
+    List<String> lookupKeys() {
         final List<String> keys = Lists.newArrayList(this.name.toLowerCase());
         for (final String alias : this.aliases)
             keys.add(alias.toLowerCase());
@@ -243,6 +239,28 @@ public abstract class Command {
             }
         }
         return result;
+    }
+
+    /**
+     * Execute the command with special arguments and return a richer {@link ExecutionResult}.
+     * <p>
+     * Unlike {@link #execute(CommandSender, String[], IOHandler)}, this method does not throw the
+     * exception raised by an executor; instead it captures it as a {@link CommandResult#REFUSE_EXCEPTION}
+     * result whose message is the exception message, so callers can receive richer feedback without
+     * having to catch exceptions themselves.
+     *
+     * @param sender    the executor
+     * @param args      the arguments that command spilt by spaces
+     * @param ioHandler the receiver
+     * @return the execution result, pairing the {@link CommandResult} status with an optional message
+     */
+    @NotNull
+    public final ExecutionResult executeResult(@NotNull final CommandSender sender, @NotNull final String[] args, @NotNull final IOHandler ioHandler) {
+        try {
+            return ExecutionResult.of(this.execute(sender, args, ioHandler));
+        } catch (final Exception e) {
+            return ExecutionResult.of(CommandResult.REFUSE_EXCEPTION, e.getMessage());
+        }
     }
 
     @NotNull
