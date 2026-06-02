@@ -172,7 +172,7 @@ public abstract class Command {
      * @throws IllegalArgumentException internal error, never expected
      * @throws Exception the exception that occurred when executing the command
      */
-    public final CommandResult execute(@NotNull final CommandSender sender, @NotNull final String[] args,@NotNull IOHandler ioHandler) throws Exception {
+    public final CommandResult execute(@NotNull final CommandSender sender, @NotNull final String[] args, @NotNull final IOHandler ioHandler) throws Exception {
         if (!this.isRegistered())
             return CommandResult.COMMAND_REFUSED;
         if (!sender.hasPermission(this.getPermission()))
@@ -185,7 +185,7 @@ public abstract class Command {
                 if ((dataCollection = executor.check(args)) != null) {
                     Exception exception = null;
                     try {
-                        result = executor.execute(sender, dataCollection,ioHandler);
+                        result = executor.execute(sender, dataCollection, ioHandler);
                     } catch (final Exception e) {
                         result = CommandResult.REFUSE_EXCEPTION;
                         exception = e;
@@ -239,7 +239,7 @@ public abstract class Command {
     @NotNull
     public abstract List<String> usage(CommandSender sender);
 
-    public final void infoUsage(final CommandSender sender, @NotNull IOHandler ioHandler) {
+    public final void infoUsage(final CommandSender sender, @NotNull final IOHandler ioHandler) {
         final List<String> usage = this.usage(sender);
         int pos = 0;
         final int targetPos = 7;
@@ -277,10 +277,10 @@ public abstract class Command {
             this.nullableCommandArguments = (int) Arrays.stream(commandArguments).filter(CommandArgument::isNullable).count();
         }
 
-        private CommandResult execute(final CommandSender sender, final DataCollection dataCollection, @NotNull IOHandler ioHandler) {
+        private CommandResult execute(final CommandSender sender, final DataCollection dataCollection, @NotNull final IOHandler ioHandler) {
             if (!this.executorPermission.test(sender))
                 return CommandResult.REFUSE;
-            return this.executor.execute(sender, dataCollection,ioHandler);
+            return this.executor.execute(sender, dataCollection, ioHandler);
         }
 
 

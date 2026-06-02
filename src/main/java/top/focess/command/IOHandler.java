@@ -1,6 +1,6 @@
 package top.focess.command;
 
-import org.checkerframework.checker.nullness.qual.NonNull;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
@@ -29,24 +29,17 @@ public abstract class IOHandler {
      * @throws InputTimeoutException if the command has waited for more than the time it expects
      * @see #hasInput()
      */
-    @NonNull
+    @NotNull
     public synchronized String input() throws InputTimeoutException {
-        // one of the callers can get the input String
-        if (this.flag) {
-            this.flag = false;
-            if (this.value == null)
-                throw new InputTimeoutException();
-            // this.value cannot be null, because the change of value is synchronized
-            return Objects.requireNonNull(this.value);
-        } else {
-            if (this.hasInput()) {
-                this.flag = false;
-                if (this.value == null)
-                    throw new InputTimeoutException();
-                // this.value cannot be null, because the change of value is synchronized
-                return Objects.requireNonNull(this.value);
-            } else throw new InputTimeoutException();
-        }
+        // If no input is ready yet, wait until one arrives (or the wait is interrupted).
+        if (!this.flag && !this.hasInput())
+            throw new InputTimeoutException();
+        // one of the callers can consume the input String
+        this.flag = false;
+        if (this.value == null)
+            throw new InputTimeoutException();
+        // this.value cannot be null, because the change of value is synchronized
+        return Objects.requireNonNull(this.value);
     }
 
     /**
@@ -67,9 +60,12 @@ public abstract class IOHandler {
      */
     public synchronized boolean hasInput() {
         try {
-            this.wait();
+            // guard against spurious wakeups: only return once an input has actually been provided
+            while (!this.flag)
+                this.wait();
             return true;
-        } catch (InterruptedException e) {
+        } catch (final InterruptedException e) {
+            Thread.currentThread().interrupt();
             return false;
         }
     }

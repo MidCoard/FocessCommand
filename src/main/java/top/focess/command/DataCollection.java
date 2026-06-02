@@ -1,7 +1,6 @@
 package top.focess.command;
 
 import com.google.common.collect.Maps;
-import org.checkerframework.checker.nullness.qual.NonNull;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import top.focess.command.data.*;
@@ -84,7 +83,7 @@ public class DataCollection {
      * @return the String argument in order
      * @throws NullPointerException if the value is null
      */
-    @NonNull
+    @NotNull
     public String get() {
         return Objects.requireNonNull(this.get(String.class));
     }
