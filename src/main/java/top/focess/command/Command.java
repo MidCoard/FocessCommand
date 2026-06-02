@@ -19,7 +19,15 @@ import java.util.function.Predicate;
 public abstract class Command {
 
 
+    /**
+     * Lookup map keyed by lower-cased command name and aliases.
+     */
     private static final Map<String, Command> COMMANDS_MAP = Maps.newConcurrentMap();
+
+    /**
+     * All currently registered commands (each command appears once).
+     */
+    private static final List<Command> COMMANDS = Lists.newCopyOnWriteArrayList();
 
     private final List<Executor> executors = Lists.newCopyOnWriteArrayList();
 
@@ -70,7 +78,7 @@ public abstract class Command {
      * Unregister all commands
      */
     public static void unregisterAll() {
-        for (final Command command : COMMANDS_MAP.values())
+        for (final Command command : Lists.newArrayList(COMMANDS))
             command.unregister();
     }
 
@@ -82,27 +90,38 @@ public abstract class Command {
     @NotNull
     @UnmodifiableView
     public static List<Command> getCommands() {
-        return Collections.unmodifiableList(Lists.newArrayList(COMMANDS_MAP.values()));
+        return Collections.unmodifiableList(Lists.newArrayList(COMMANDS));
+    }
+
+    /**
+     * Get a registered command by its name or one of its aliases (case-insensitive).
+     *
+     * @param name the name or alias of the command
+     * @return the matching command, or null if none is registered under that key
+     */
+    @Nullable
+    public static Command get(@NotNull final String name) {
+        return COMMANDS_MAP.get(name.toLowerCase());
     }
 
     /**
      * Register the command
      *
      * @param command the command that need to be registered
-     * @throws CommandDuplicateException if the command name already exists in the registered commands
-     * @throws IllegalStateException    if the command is not initialized
+     * @throws CommandDuplicateException if the command name or any alias already exists in the registered commands
+     * @throws IllegalStateException     if the command is not initialized
      */
     public static void register(@NotNull final Command command) {
         if (command.name == null)
             throw new IllegalStateException("CommandType does not contain name or the constructor does not super name");
-        List<String> commandNames = Lists.newArrayList(command.getName());
-        commandNames.addAll(command.getAliases());
-        for (final String commandName : commandNames)
-            for (Map.Entry<String,Command> entry : COMMANDS_MAP.entrySet())
-                if (entry.getKey().equalsIgnoreCase(commandName) || entry.getValue().getAliases().stream().anyMatch(alias -> alias.equalsIgnoreCase(commandName)))
-                    throw new CommandDuplicateException(commandName);
+        final List<String> keys = command.lookupKeys();
+        for (final String key : keys)
+            if (COMMANDS_MAP.containsKey(key))
+                throw new CommandDuplicateException(key);
+        for (final String key : keys)
+            COMMANDS_MAP.put(key, command);
+        COMMANDS.add(command);
         command.registered = true;
-        COMMANDS_MAP.put(command.getName(), command);
     }
 
     public boolean isRegistered() {
@@ -115,7 +134,22 @@ public abstract class Command {
     public void unregister() {
         this.registered = false;
         this.executors.clear();
-        COMMANDS_MAP.remove(this.getName());
+        for (final String key : this.lookupKeys())
+            COMMANDS_MAP.remove(key, this);
+        COMMANDS.remove(this);
+    }
+
+    /**
+     * The lower-cased lookup keys (name and aliases) of this command.
+     *
+     * @return the lookup keys
+     */
+    @NotNull
+    private List<String> lookupKeys() {
+        final List<String> keys = Lists.newArrayList(this.name.toLowerCase());
+        for (final String alias : this.aliases)
+            keys.add(alias.toLowerCase());
+        return keys;
     }
 
     @NotNull

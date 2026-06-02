@@ -33,7 +33,7 @@ public enum CommandResult {
     /**
      * It includes all CommandResult
      */
-    ALL(ALLOW, REFUSE, COMMAND_REFUSED, ARGS_NOT_EXECUTED, ARGS),
+    ALL(ALLOW, REFUSE, COMMAND_REFUSED, ARGS_NOT_EXECUTED, ARGS, REFUSE_EXCEPTION),
     /**
      * It includes all negative CommandResult
      */
@@ -41,7 +41,7 @@ public enum CommandResult {
     /**
      * It includes all executed CommandResult
      */
-    EXECUTED(ALLOW,REFUSE, ARGS),
+    EXECUTED(ALLOW, REFUSE, ARGS),
     /**
      * No signal
      */
@@ -76,6 +76,6 @@ public enum CommandResult {
     }
 
     public boolean isExecuted() {
-        return EXECUTED.contains(this);
+        return this != NONE && EXECUTED.contains(this);
     }
 }

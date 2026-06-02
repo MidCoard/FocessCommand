@@ -2,6 +2,8 @@
 
 This API is used to create commands for Focess. I made this API public because it is really useful in everywhere.
 
+> **Note:** Starting with `2.0.0` this library targets **Java 17**.
+
 # Development
 
 Maven:
@@ -10,12 +12,12 @@ Maven:
 <dependency>
     <groupId>top.focess</groupId>
     <artifactId>focess-command</artifactId>
-    <version>1.3.2</version>
+    <version>2.0.0</version>
 </dependency>
 ```
 
 Gradle:
 
 ```gradle
-implementation 'top.focess:focess-command:1.3.2'
+implementation 'top.focess:focess-command:2.0.0'
 ```

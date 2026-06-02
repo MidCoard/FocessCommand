@@ -137,6 +137,7 @@ public class DataCollection {
      * @return the buffer element
      * @throws UnsupportedOperationException if the buffer is not registered
      */
+    @SuppressWarnings("unchecked")
     @Contract("_,!null->!null")
     public <T> T getOrDefault(final Class<T> cls, final T t) {
         try {
@@ -156,6 +157,7 @@ public class DataCollection {
      * @return the buffer element
      * @throws UnsupportedOperationException if the buffer is not registered
      */
+    @SuppressWarnings("unchecked")
     @Contract("_,_,!null->!null")
     public <T> T getOrDefault(final Class<T> cls, final int index, final T t) {
         try {
@@ -182,6 +184,7 @@ public class DataCollection {
      * @return the buffer element
      * @throws UnsupportedOperationException if the buffer is not registered
      */
+    @SuppressWarnings("unchecked")
     @NotNull
     public <T> T get(final Class<T> c) {
         if (this.buffers.get(c) == null)
@@ -198,6 +201,7 @@ public class DataCollection {
      * @return the buffer element
      * @throws UnsupportedOperationException if the buffer is not registered
      */
+    @SuppressWarnings("unchecked")
     @NotNull
     public <T> T get(final Class<T> c, final int index) {
         if (this.buffers.get(c) == null)
