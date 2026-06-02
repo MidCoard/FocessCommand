@@ -49,6 +49,7 @@
                 <configuration>
                     <publishingServerId>central</publishingServerId>
                     <autoPublish>true</autoPublish>
+                    <!-- Return after upload so CI is not blocked waiting for full publish completion. -->
                     <waitUntil>UPLOADED</waitUntil>
                 </configuration>
             </plugin>
