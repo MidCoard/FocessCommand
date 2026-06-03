@@ -135,6 +135,45 @@ class CommandTest {
         assertEquals(2, suggestions.size());
     }
 
+    @Test
+    void multiExecutorPatternCompletion() {
+        final Command patternCmd = new Command("pattern") {
+            @Override
+            public void init() {
+                addExecutor((s, d, io) -> CommandResult.ALLOW, CommandArgument.of("create"), CommandArgument.ofString());
+                addExecutor((s, d, io) -> CommandResult.ALLOW, CommandArgument.of("list"));
+                addExecutor((s, d, io) -> CommandResult.ALLOW, CommandArgument.of("remove"), CommandArgument.ofString());
+            }
+            @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
+        };
+        patternCmd.register(patternCmd);
+
+        // Case 1: Empty argument - should suggest all branch starts
+        List<String> suggestions = patternCmd.complete(sender, new String[]{""});
+        assertTrue(suggestions.contains("create"));
+        assertTrue(suggestions.contains("list"));
+        assertTrue(suggestions.contains("remove"));
+        assertEquals(3, suggestions.size());
+
+        // Case 2: Narrowing down
+        suggestions = patternCmd.complete(sender, new String[]{"c"});
+        assertTrue(suggestions.contains("create"));
+        assertEquals(1, suggestions.size());
+
+        suggestions = patternCmd.complete(sender, new String[]{"r"});
+        assertTrue(suggestions.contains("remove"));
+        assertEquals(1, suggestions.size());
+
+        // Case 3: Moving to the next positional argument in a specific branch
+        suggestions = patternCmd.complete(sender, new String[]{"create", ""});
+        // "create" is followed by a String argument with no completer
+        assertTrue(suggestions.isEmpty());
+        
+        // Case 4: No match for first argument
+        suggestions = patternCmd.complete(sender, new String[]{"unknown", ""});
+        assertTrue(suggestions.isEmpty());
+    }
+
     private static final class EchoCommand extends Command {
         EchoCommand() {
             super("echo", "e");
