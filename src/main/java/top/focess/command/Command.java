@@ -213,9 +213,7 @@ public abstract class Command {
      */
     @NotNull
     public final ExecutionResult execute(@NotNull final CommandSender sender, @NotNull final String[] args, @NotNull final IOHandler ioHandler) {
-        if (!this.isRegistered())
-            return ExecutionResult.of(CommandResult.COMMAND_REFUSED);
-        if (!sender.hasPermission(this.getPermission()))
+        if (!this.isRegistered() || !sender.hasPermission(this.getPermission()))
             return ExecutionResult.of(CommandResult.COMMAND_REFUSED);
         boolean flag = false;
         CommandResult result = CommandResult.NONE;
@@ -237,6 +235,11 @@ public abstract class Command {
                     break;
                 }
             }
+        
+        // GATING USAGE:
+        // We only show help/usage if the sender passes the command's dynamic executorPermission.
+        // This prevents usage "leaking" to users who might have the base Enum permission 
+        // but fail a dynamic check (e.g. being in the wrong game state).
         if (this.executorPermission.test(sender)) {
             if (!flag) {
                 this.infoUsage(sender, ioHandler);
@@ -251,6 +254,9 @@ public abstract class Command {
 
     /**
      * Get the auto-complete suggestions for this command with special arguments.
+     * <p>
+     * Completion follows the same 3-layer permission model as execution (Command Enum -> Executor Enum -> Dynamic Predicate)
+     * to ensure suggestions are only shown for authorized actions.
      *
      * @param sender    the executor
      * @param args      the arguments that command spilt by spaces, the last one is the partial argument
@@ -262,6 +268,7 @@ public abstract class Command {
             return List.of();
         final List<String> suggestions = Lists.newArrayList();
         for (final Executor executor : this.executors)
+            // Consistent with execute(): check both static role and dynamic predicate.
             if (sender.hasPermission(executor.permission) && executor.executorPermission.test(sender))
                 suggestions.addAll(executor.complete(sender, args));
         return suggestions.stream().distinct().collect(Collectors.toList());

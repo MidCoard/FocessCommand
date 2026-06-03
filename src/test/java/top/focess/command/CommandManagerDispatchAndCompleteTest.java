@@ -185,11 +185,13 @@ public class CommandManagerDispatchAndCompleteTest {
             @Override
             public void init() {
                 addExecutor((s, d, io) -> {
-                    if (d.get(Double.class) == null) {
-                        assertThrows(NullPointerException.class, d::getDouble);
+                    Double val = d.get(Double.class);
+                    // d::getDouble MUST throw NPE here because the buffer was consumed by d.get(Double.class) above
+                    assertThrows(NullPointerException.class, d::getDouble);
+                    if (val == null) {
                         io.output("null");
                     } else {
-                        assertEquals(1.5, d.getDouble());
+                        assertEquals(1.5, val);
                         io.output("value");
                     }
                     return CommandResult.ALLOW;
@@ -207,6 +209,22 @@ public class CommandManagerDispatchAndCompleteTest {
         // Case 2: Skipped
         result = commandManager.dispatch(sender, "test", ioHandler);
         assertEquals(CommandResult.ALLOW, result.getResult());
+    }
+
+    @Test
+    public void testPartialQuotedCompletion() {
+        Command testCommand = new NamedCommand("test") {
+            @Override
+            public void init() {
+                addExecutor((s, d, io) -> CommandResult.ALLOW, CommandArgument.of("sub with space"));
+            }
+            @Override
+            public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
+        };
+        commandManager.register(testCommand);
+
+        List<String> suggestions = commandManager.complete(sender, "test \"sub with ");
+        assertTrue(suggestions.contains("sub with space"));
     }
 
     private static class TestSender extends CommandSender {

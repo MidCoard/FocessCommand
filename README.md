@@ -42,4 +42,3 @@ mvn -B -Dgpg.skip=true verify
 ## Future features
 
 - Better command help formatting and discoverability
-- Annotation-based command declaration

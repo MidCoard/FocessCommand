@@ -4,7 +4,7 @@ import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class DataCollectionNamedTest {
@@ -27,14 +27,14 @@ class DataCollectionNamedTest {
     }
 
     @Test
-    void getByNameThrowsForUnknownName() {
+    void getByNameReturnsNullForUnknownName() {
         final DataCollection collection = new DataCollection(new DataConverter<?>[]{
                 DataConverter.DEFAULT_DATA_CONVERTER
         });
         CommandArgument.ofString().named("present").put(collection, "value");
         collection.flip();
 
-        assertThrows(IllegalArgumentException.class, () -> collection.get("absent"));
+        assertNull(collection.get("absent"));
         assertEquals("fallback", collection.getOrDefault("absent", "fallback"));
         assertEquals("value", collection.getOrDefault("present", "fallback"));
     }

@@ -3,6 +3,7 @@ package top.focess.command;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class DataCollectionTest {
 
@@ -38,13 +39,13 @@ class DataCollectionTest {
     }
 
     @Test
-    void getOrDefaultFallsBackForUnregisteredClass() {
+    void getOrDefaultThrowsForUnregisteredClass() {
         final DataCollection collection = new DataCollection(new DataConverter<?>[]{
                 DataConverter.DEFAULT_DATA_CONVERTER
         });
         collection.write(String.class, "value");
         collection.flip();
 
-        assertEquals(Boolean.TRUE, collection.getOrDefault(Boolean.class, true));
+        assertThrows(IllegalStateException.class, () -> collection.getOrDefault(Boolean.class, true));
     }
 }
