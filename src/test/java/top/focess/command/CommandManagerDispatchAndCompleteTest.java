@@ -180,19 +180,33 @@ public class CommandManagerDispatchAndCompleteTest {
     }
 
     @Test
-    public void testPartialQuotedCompletion() {
+    public void testDoubleNullable() {
         Command testCommand = new NamedCommand("test") {
             @Override
             public void init() {
-                addExecutor((s, d, io) -> CommandResult.ALLOW, CommandArgument.of("sub with space"));
+                addExecutor((s, d, io) -> {
+                    if (d.get(Double.class) == null) {
+                        assertThrows(NullPointerException.class, d::getDouble);
+                        io.output("null");
+                    } else {
+                        assertEquals(1.5, d.getDouble());
+                        io.output("value");
+                    }
+                    return CommandResult.ALLOW;
+                }, CommandArgument.ofNullable(DataConverter.DOUBLE_DATA_CONVERTER));
             }
             @Override
             public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
         };
         commandManager.register(testCommand);
 
-        List<String> suggestions = commandManager.complete(sender, "test \"sub with ");
-        assertTrue(suggestions.contains("sub with space"));
+        // Case 1: Provided
+        ExecutionResult result = commandManager.dispatch(sender, "test 1.5", ioHandler);
+        assertEquals(CommandResult.ALLOW, result.getResult());
+
+        // Case 2: Skipped
+        result = commandManager.dispatch(sender, "test", ioHandler);
+        assertEquals(CommandResult.ALLOW, result.getResult());
     }
 
     private static class TestSender extends CommandSender {

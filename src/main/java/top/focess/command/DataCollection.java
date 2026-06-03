@@ -84,15 +84,11 @@ public class DataCollection {
      * Get String argument in order
      *
      * @return the String argument in order
-     * @throws NullPointerException if the value is null
      * @throws IllegalStateException if the buffer is not registered
      */
-    @NotNull
+    @Nullable
     public String get() {
-        final String value = this.get(String.class);
-        if (value == null)
-            throw new NullPointerException("String argument is null");
-        return value;
+        return this.get(String.class);
     }
 
     /**

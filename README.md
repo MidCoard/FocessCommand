@@ -6,11 +6,14 @@ FocessCommand is a lightweight Java command framework for building typed, permis
 
 ## Features
 
-- Typed command arguments with built-in converters
-- Executor-level and command-level permission checks
-- Command aliases and case-insensitive command lookup
-- Structured execution result reporting
-- Manager-based command registries for isolated command scopes
+- **Typed command arguments** with built-in and custom converters.
+- **Quoted argument support** (single and double quotes) for whitespace-containing strings.
+- **Integrated Command Dispatcher** for executing raw input strings directly via `CommandManager`.
+- **Intelligent Tab-completion API** for command names, aliases, and positional arguments (including support for optional/nullable arguments).
+- **Executor-level and command-level permission checks**.
+- **Case-insensitive command lookup** and case-insensitive `Enum` support.
+- **Thread-safe registry** using `ConcurrentMap` and `CopyOnWriteArrayList`.
+- **Structured execution result reporting**.
 
 ## Dependency
 
@@ -20,14 +23,14 @@ FocessCommand is a lightweight Java command framework for building typed, permis
 <dependency>
     <groupId>top.focess</groupId>
     <artifactId>focess-command</artifactId>
-    <version>2.0.0</version>
+    <version>2.1.0</version>
 </dependency>
 ```
 
 ### Gradle
 
 ```gradle
-implementation 'top.focess:focess-command:2.0.0'
+implementation 'top.focess:focess-command:2.1.0'
 ```
 
 ## Build
@@ -39,4 +42,4 @@ mvn -B -Dgpg.skip=true verify
 ## Future features
 
 - Better command help formatting and discoverability
-- **Tab-complete support** for command names and arguments
+- Annotation-based command declaration
