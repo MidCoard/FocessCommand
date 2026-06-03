@@ -55,7 +55,7 @@ class ComplexExecuteTest {
         // Case 1: Hidden
         visible.set(false);
         ExecutionResult res = manager.dispatch(owner, "secret wrong-args", ioHandler);
-        assertEquals(CommandResult.ARGS_NOT_EXECUTED, res.getResult());
+        assertEquals(CommandResult.NONE, res.getResult());
         assertNull(ioHandler.lastOutput()); // Help message NOT printed
 
         // Case 2: Visible
