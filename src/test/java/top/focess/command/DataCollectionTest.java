@@ -2,7 +2,7 @@ package top.focess.command;
 
 import org.junit.jupiter.api.Test;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.*;
 
 class DataCollectionTest {
 
@@ -18,8 +18,8 @@ class DataCollectionTest {
         collection.write(String.class, "hello");
         collection.flip();
 
-        assertEquals(1, collection.getInt());
-        assertEquals(2, collection.getInt());
+        assertEquals(1, (int) collection.getInt());
+        assertEquals(2, (int) collection.getInt());
         assertEquals("hello", collection.get());
     }
 
@@ -38,13 +38,40 @@ class DataCollectionTest {
     }
 
     @Test
-    void getOrDefaultFallsBackForUnregisteredClass() {
+    void getOrDefaultThrowsForUnregisteredClass() {
         final DataCollection collection = new DataCollection(new DataConverter<?>[]{
                 DataConverter.DEFAULT_DATA_CONVERTER
         });
         collection.write(String.class, "value");
         collection.flip();
 
-        assertEquals(Boolean.TRUE, collection.getOrDefault(Boolean.class, true));
+        assertThrows(IllegalStateException.class, () -> collection.getOrDefault(Boolean.class, true));
+    }
+
+    @Test
+    void boxedGettersThrowNpeOnNull() {
+        final DataCollection collection = new DataCollection(new DataConverter<?>[]{
+                DataConverter.INTEGER_DATA_CONVERTER
+        });
+        // Write nothing (or write null if it was supported, but currently check() puts actual values)
+        // Actually, check() puts values. If an argument is missing, it's not put.
+        // But the buffer exists. If we read past the end or from an empty buffer:
+        collection.flip();
+        
+        assertNull(collection.get(Integer.class));
+        assertThrows(NullPointerException.class, collection::getInt);
+    }
+
+    @Test
+    void exhaustedBufferThrowsNpe() {
+        final DataCollection collection = new DataCollection(new DataConverter<?>[]{
+                DataConverter.DOUBLE_DATA_CONVERTER
+        });
+        collection.write(Double.class, 1.5);
+        collection.flip();
+
+        assertEquals(1.5, collection.get(Double.class));
+        // Buffer consumed
+        assertThrows(NullPointerException.class, collection::getDouble);
     }
 }

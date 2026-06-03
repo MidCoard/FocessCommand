@@ -5,12 +5,9 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNull;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class CommandManagerTest {
 
@@ -59,6 +56,64 @@ class CommandManagerTest {
         assertNull(manager.get("temp"));
         assertNull(manager.get("t"));
         assertTrue(manager.getCommands().isEmpty());
+    }
+
+    @Test
+    void dispatchReturnsNotFoundForMissingCommand() {
+        final CommandManager manager = new CommandManager();
+        final CommandSender sender = new CommandSender(CommandPermission.OWNER) {};
+        final ExecutionResult result = manager.dispatch(sender, "unknown arg", new IOHandler() {
+            @Override public String input() { return ""; }
+            @Override public void output(String message) {}
+        });
+        assertEquals(CommandResult.COMMAND_NOT_FOUND, result.getResult());
+    }
+
+    @Test
+    void dispatchHandlesQuotedArguments() {
+        final CommandManager manager = new CommandManager();
+        final AtomicReference<String> argReceived = new AtomicReference<>();
+        manager.register(new Command("echo") {
+            @Override
+            public void init() {
+                addExecutor((s, d, io) -> {
+                    argReceived.set(d.get());
+                    return CommandResult.ALLOW;
+                }, CommandArgument.ofString());
+            }
+            @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
+        });
+
+        manager.dispatch(new CommandSender(CommandPermission.OWNER) {}, "echo \"hello world\"", new IOHandler() {
+            @Override public String input() { return ""; }
+            @Override public void output(String message) {}
+        });
+        assertEquals("hello world", argReceived.get());
+    }
+
+    @Test
+    void completeSuggestsNamesCaseInsensitively() {
+        final CommandManager manager = new CommandManager();
+        manager.register(new NamedCommand("apple"));
+        manager.register(new NamedCommand("Apply"));
+        final CommandSender sender = new CommandSender(CommandPermission.OWNER) {};
+
+        List<String> suggestions = manager.complete(sender, "app");
+        assertTrue(suggestions.contains("apple"));
+        assertTrue(suggestions.contains("apply"));
+    }
+
+    @Test
+    void completeHandlesPartialQuotedInput() {
+        final CommandManager manager = new CommandManager();
+        manager.register(new Command("test") {
+            @Override public void init() { addExecutor((s, d, io) -> CommandResult.ALLOW, CommandArgument.of("sub item")); }
+            @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
+        });
+        final CommandSender sender = new CommandSender(CommandPermission.OWNER) {};
+
+        List<String> suggestions = manager.complete(sender, "test \"sub ");
+        assertTrue(suggestions.contains("sub item"));
     }
 
     private static final class NamedCommand extends Command {

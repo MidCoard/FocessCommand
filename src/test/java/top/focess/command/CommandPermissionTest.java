@@ -30,4 +30,15 @@ class CommandPermissionTest {
     void samePermissionIsSatisfied() {
         assertTrue(CommandPermission.MEMBER.hasPermission(CommandPermission.MEMBER));
     }
+
+    @Test
+    void customPredicateGatesDynamically() {
+        final java.util.concurrent.atomic.AtomicBoolean state = new java.util.concurrent.atomic.AtomicBoolean(false);
+        final java.util.function.Predicate<CommandSender> predicate = s -> state.get();
+        final CommandSender sender = new CommandSender(CommandPermission.OWNER) {};
+
+        assertFalse(predicate.test(sender));
+        state.set(true);
+        assertTrue(predicate.test(sender));
+    }
 }

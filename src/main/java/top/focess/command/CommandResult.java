@@ -31,13 +31,17 @@ public enum CommandResult {
      */
     REFUSE_EXCEPTION(32),
     /**
+     * It indicates that the command is not found
+     */
+    COMMAND_NOT_FOUND(64),
+    /**
      * It includes all CommandResult
      */
-    ALL(ALLOW, REFUSE, COMMAND_REFUSED, ARGS_NOT_EXECUTED, ARGS, REFUSE_EXCEPTION),
+    ALL(ALLOW, REFUSE, COMMAND_REFUSED, ARGS_NOT_EXECUTED, ARGS, REFUSE_EXCEPTION, COMMAND_NOT_FOUND),
     /**
      * It includes all negative CommandResult
      */
-    NEGATIVE(REFUSE, COMMAND_REFUSED, ARGS_NOT_EXECUTED, ARGS, REFUSE_EXCEPTION),
+    NEGATIVE(REFUSE, COMMAND_REFUSED, ARGS_NOT_EXECUTED, ARGS, REFUSE_EXCEPTION, COMMAND_NOT_FOUND),
     /**
      * It includes all executed CommandResult
      */

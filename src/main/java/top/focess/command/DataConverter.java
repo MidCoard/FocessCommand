@@ -1,10 +1,16 @@
 package top.focess.command;
 
+import com.google.common.collect.Lists;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import top.focess.command.converter.ExceptionDataConverter;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 /**
  * This class used to convert String data to target T type data.
@@ -72,6 +78,7 @@ public abstract class DataConverter<T> {
             return false;
         }
     };
+
 
     /**
      * Never convert it! Put them into DataCollection with their original values.
@@ -173,10 +180,118 @@ public abstract class DataConverter<T> {
         }
 
         @Override
+        @NotNull
+        public List<String> complete(@NotNull final CommandSender sender, @NotNull final String arg) {
+            final List<String> choices = List.of("true", "false");
+            if (arg.isEmpty())
+                return choices;
+            return choices.stream()
+                    .filter(s -> s.toLowerCase().startsWith(arg.toLowerCase()))
+                    .collect(Collectors.toList());
+        }
+
+        @Override
         protected Class<Boolean> getTargetClass() {
             return Boolean.class;
         }
     };
+
+    /**
+     * Create a DataConverter that suggests fixed choices.
+     *
+     * @param choices the available choices
+     * @return the DataConverter
+     */
+    @NotNull
+    @Contract("_ -> new")
+    public static DataConverter<String> ofChoices(@NotNull final String... choices) {
+        return ofChoices(Arrays.asList(choices));
+    }
+
+    /**
+     * Create a DataConverter that suggests fixed choices.
+     *
+     * @param choices the available choices
+     * @return the DataConverter
+     */
+    @NotNull
+    @Contract("_ -> new")
+    public static DataConverter<String> ofChoices(@NotNull final List<String> choices) {
+        return new DataConverter<String>() {
+            @Override
+            public boolean accept(String arg) {
+                return choices.contains(arg);
+            }
+
+            @Override
+            public String convert(String arg) {
+                return arg;
+            }
+
+            @Override
+            @NotNull
+            public List<String> complete(@NotNull CommandSender sender, @NotNull String arg) {
+                if (arg.isEmpty())
+                    return choices;
+                return choices.stream()
+                        .filter(s -> s.toLowerCase().startsWith(arg.toLowerCase()))
+                        .collect(Collectors.toList());
+            }
+
+            @Override
+            protected Class<String> getTargetClass() {
+                return String.class;
+            }
+        };
+    }
+
+    /**
+     * Create a DataConverter for an Enum class.
+     *
+     * @param enumClass the enum class
+     * @param <E>       the enum type
+     * @return the DataConverter
+     */
+    @NotNull
+    @Contract("_ -> new")
+    public static <E extends Enum<E>> DataConverter<E> ofEnum(@NotNull final Class<E> enumClass) {
+        return new DataConverter<E>() {
+            @Override
+            public boolean accept(String arg) {
+                for (final E e : enumClass.getEnumConstants())
+                    if (e.name().equalsIgnoreCase(arg))
+                        return true;
+                return false;
+            }
+
+            @Override
+            public E convert(String arg) {
+                for (final E e : enumClass.getEnumConstants())
+                    if (e.name().equalsIgnoreCase(arg))
+                        return e;
+                throw new IllegalArgumentException("No enum constant " + enumClass.getCanonicalName() + "." + arg);
+            }
+
+            @Override
+            @NotNull
+            public List<String> complete(@NotNull CommandSender sender, @NotNull String arg) {
+                final List<String> names = Arrays.stream(enumClass.getEnumConstants())
+                        .map(Enum::name)
+                        .map(String::toLowerCase)
+                        .collect(Collectors.toList());
+                if (arg.isEmpty())
+                    return names;
+                return names.stream()
+                        .filter(s -> s.startsWith(arg.toLowerCase()))
+                        .collect(Collectors.toList());
+            }
+
+            @Override
+            protected Class<E> getTargetClass() {
+                return enumClass;
+            }
+        };
+    }
 
     /**
      * Indicate whether this String argument is this target type or not
@@ -209,4 +324,16 @@ public abstract class DataConverter<T> {
     }
 
     protected abstract Class<T> getTargetClass();
+
+    /**
+     * Get the auto-complete suggestions for this argument
+     *
+     * @param sender the executor
+     * @param arg    the current argument
+     * @return the auto-complete suggestions
+     */
+    @NotNull
+    public List<String> complete(@NotNull final CommandSender sender, @NotNull final String arg) {
+        return List.of();
+    }
 }

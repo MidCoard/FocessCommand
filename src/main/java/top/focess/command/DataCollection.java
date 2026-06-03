@@ -3,6 +3,7 @@ package top.focess.command;
 import com.google.common.collect.Maps;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import top.focess.command.data.*;
 import top.focess.command.data.StringBuffer;
 
@@ -83,11 +84,11 @@ public class DataCollection {
      * Get String argument in order
      *
      * @return the String argument in order
-     * @throws NullPointerException if the value is null
+     * @throws IllegalStateException if the buffer is not registered
      */
-    @NotNull
+    @Nullable
     public String get() {
-        return Objects.requireNonNull(this.get(String.class));
+        return this.get(String.class);
     }
 
     /**
@@ -95,9 +96,13 @@ public class DataCollection {
      *
      * @return the int argument in order
      * @throws NullPointerException if the value is null
+     * @throws IllegalStateException if the buffer is not registered
      */
     public int getInt() {
-        return Objects.requireNonNull(this.get(Integer.class));
+        final Integer value = this.get(Integer.class);
+        if (value == null)
+            throw new NullPointerException("Integer argument is null");
+        return value;
     }
 
     /**
@@ -105,9 +110,13 @@ public class DataCollection {
      *
      * @return the double argument in order
      * @throws NullPointerException if the value is null
+     * @throws IllegalStateException if the buffer is not registered
      */
     public double getDouble() {
-        return Objects.requireNonNull(this.get(Double.class));
+        final Double value = this.get(Double.class);
+        if (value == null)
+            throw new NullPointerException("Double argument is null");
+        return value;
     }
 
     /**
@@ -115,9 +124,13 @@ public class DataCollection {
      *
      * @return the boolean argument in order
      * @throws NullPointerException if the value is null
+     * @throws IllegalStateException if the buffer is not registered
      */
     public boolean getBoolean() {
-        return Objects.requireNonNull(this.get(Boolean.class));
+        final Boolean value = this.get(Boolean.class);
+        if (value == null)
+            throw new NullPointerException("Boolean argument is null");
+        return value;
     }
 
     /**
@@ -125,9 +138,13 @@ public class DataCollection {
      *
      * @return the long argument in order
      * @throws NullPointerException if the value is null
+     * @throws IllegalStateException if the buffer is not registered
      */
     public long getLong() {
-        return Objects.requireNonNull(this.get(Long.class));
+        final Long value = this.get(Long.class);
+        if (value == null)
+            throw new NullPointerException("Long argument is null");
+        return value;
     }
 
     /**
@@ -136,17 +153,17 @@ public class DataCollection {
      * @param cls the buffer elements' class
      * @param t   the default value
      * @param <T> the buffer elements' type
-     * @return the buffer element
-     * @throws UnsupportedOperationException if the buffer is not registered
+     * @return the buffer element, or the default value if the buffer element is null
+     * @throws IllegalStateException if the buffer is not registered
      */
     @SuppressWarnings("unchecked")
     @Contract("_,!null->!null")
     public <T> T getOrDefault(final Class<T> cls, final T t) {
-        try {
-            return (T) this.buffers.get(cls).get();
-        } catch (final Exception e) {
-            return t;
-        }
+        final DataBuffer<?> buffer = this.buffers.get(cls);
+        if (buffer == null)
+            throw new IllegalStateException("Buffer not registered for class: " + cls.getName());
+        final T value = (T) buffer.get();
+        return value != null ? value : t;
     }
 
     /**
@@ -156,23 +173,23 @@ public class DataCollection {
      * @param t     the default value
      * @param index the buffer element index
      * @param <T>   the buffer elements' type
-     * @return the buffer element
-     * @throws UnsupportedOperationException if the buffer is not registered
+     * @return the buffer element, or the default value if the buffer element is null
+     * @throws IllegalStateException if the buffer is not registered
      */
     @SuppressWarnings("unchecked")
     @Contract("_,_,!null->!null")
     public <T> T getOrDefault(final Class<T> cls, final int index, final T t) {
-        try {
-            return (T) this.buffers.get(cls).get(index);
-        } catch (final Exception e) {
-            return t;
-        }
+        final DataBuffer<?> buffer = this.buffers.get(cls);
+        if (buffer == null)
+            throw new IllegalStateException("Buffer not registered for class: " + cls.getName());
+        final T value = (T) buffer.get(index);
+        return value != null ? value : t;
     }
 
     <T> void write(final Class<T> cls, final T t) {
         this.buffers.compute(cls, (key, value) -> {
             if (value == null)
-                throw new UnsupportedOperationException();
+                throw new IllegalStateException("Buffer not registered for class: " + cls.getName());
             value.put(t);
             return value;
         });
@@ -184,13 +201,13 @@ public class DataCollection {
      * @param c   the buffer elements' class
      * @param <T> the buffer elements' type
      * @return the buffer element
-     * @throws UnsupportedOperationException if the buffer is not registered
+     * @throws IllegalStateException if the buffer is not registered
      */
     @SuppressWarnings("unchecked")
-    @NotNull
+    @Nullable
     public <T> T get(final Class<T> c) {
         if (this.buffers.get(c) == null)
-            throw new UnsupportedOperationException();
+            throw new IllegalStateException("Buffer not registered for class: " + c.getName());
         return (T) this.buffers.get(c).get();
     }
 
@@ -201,13 +218,13 @@ public class DataCollection {
      * @param c     the buffer elements' class
      * @param <T>   the buffer elements' type
      * @return the buffer element
-     * @throws UnsupportedOperationException if the buffer is not registered
+     * @throws IllegalStateException if the buffer is not registered
      */
     @SuppressWarnings("unchecked")
-    @NotNull
+    @Nullable
     public <T> T get(final Class<T> c, final int index) {
         if (this.buffers.get(c) == null)
-            throw new UnsupportedOperationException();
+            throw new IllegalStateException("Buffer not registered for class: " + c.getName());
         return (T) this.buffers.get(c).get(index);
     }
 
@@ -220,14 +237,11 @@ public class DataCollection {
      *
      * @param name the name of the argument
      * @param <T>  the argument type
-     * @return the named argument value
-     * @throws IllegalArgumentException if no argument is registered under that name
+     * @return the named argument value, or null if it was null or not found
      */
     @SuppressWarnings("unchecked")
-    @NotNull
+    @Nullable
     public <T> T get(@NotNull final String name) {
-        if (!this.namedValues.containsKey(name))
-            throw new IllegalArgumentException("No argument registered under name: " + name);
         return (T) this.namedValues.get(name);
     }
 

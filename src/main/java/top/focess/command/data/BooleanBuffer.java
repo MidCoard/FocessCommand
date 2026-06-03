@@ -30,19 +30,19 @@ public class BooleanBuffer extends DataBuffer<Boolean> {
 
     @Override
     public void put(final Boolean b) {
-        this.byteBuffer.put((byte) (b ? 1 : 0));
+        this.byteBuffer.put((byte) (b == null ? 2 : (b ? 1 : 0)));
     }
 
-    @NotNull
     @Override
     public Boolean get() {
-        return this.byteBuffer.get() != 0;
+        byte b = this.byteBuffer.get();
+        return b == 2 ? null : b != 0;
     }
 
-    @NotNull
     @Override
     public Boolean get(final int index) {
-        return this.byteBuffer.get(index) != 0;
+        byte b = this.byteBuffer.get(index);
+        return b == 2 ? null : b != 0;
     }
 
     @Override
