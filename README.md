@@ -10,9 +10,8 @@ FocessCommand is a lightweight Java command framework for building typed, permis
 - **Quoted argument support** (single and double quotes) for whitespace-containing strings.
 - **Integrated Command Dispatcher** for executing raw input strings directly via `CommandManager`.
 - **Intelligent Tab-completion API** for command names, aliases, and positional arguments (including support for optional/nullable arguments).
-- **Executor-level and command-level permission checks**.
+- **Multi-layer Permission System** (Static Roles + Dynamic Predicates).
 - **Case-insensitive command lookup** and case-insensitive `Enum` support.
-- **Thread-safe registry** using `ConcurrentMap` and `CopyOnWriteArrayList`.
 - **Structured execution result reporting**.
 
 ## Dependency
@@ -42,3 +41,4 @@ mvn -B -Dgpg.skip=true verify
 ## Future features
 
 - Better command help formatting and discoverability
+- Automatic Command usage generation

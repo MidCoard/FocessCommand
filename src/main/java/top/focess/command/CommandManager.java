@@ -26,12 +26,12 @@ public class CommandManager {
     /**
      * Lookup map keyed by lower-cased command name and aliases.
      */
-    private final Map<String, Command> commandsMap = Maps.newConcurrentMap();
+    private final Map<String, Command> commandsMap = Maps.newHashMap();
 
     /**
      * All currently registered commands (each command appears once).
      */
-    private final List<Command> commands = Lists.newCopyOnWriteArrayList();
+    private final List<Command> commands = Lists.newArrayList();
 
     /**
      * Get the shared default command manager backing the static {@link Command} methods.
@@ -67,18 +67,21 @@ public class CommandManager {
      * @param command the command that need to be unregistered
      */
     public void unregister(@NotNull final Command command) {
-        for (final String key : command.lookupKeys())
-            this.commandsMap.remove(key, command);
-        this.commands.remove(command);
-        command.clearManager();
+        if (this.commands.remove(command)) {
+            for (final String key : command.lookupKeys())
+                this.commandsMap.remove(key);
+            command.clearManager();
+        }
     }
 
     /**
      * Unregister all commands registered in this manager.
      */
     public void unregisterAll() {
-        for (final Command command : Lists.newArrayList(this.commands))
-            command.unregister();
+        for (final Command command : this.commands)
+            command.clearManager();
+        this.commands.clear();
+        this.commandsMap.clear();
     }
 
     /**
@@ -115,7 +118,7 @@ public class CommandManager {
         final List<String> split = split(input, true);
         if (split.isEmpty())
             return List.of();
-        if (split.size() <= 1) {
+        if (split.size() == 1) {
             final String name = split.get(0).toLowerCase();
             return this.commandsMap.keySet().stream()
                     .filter(key -> key.startsWith(name))
@@ -149,7 +152,7 @@ public class CommandManager {
             return ExecutionResult.of(CommandResult.NONE);
         final Command command = this.get(split.get(0));
         if (command == null)
-            return ExecutionResult.of(CommandResult.COMMAND_REFUSED);
+            return ExecutionResult.of(CommandResult.COMMAND_NOT_FOUND);
         final String[] args = new String[split.size() - 1];
         for (int i = 1; i < split.size(); i++)
             args[i - 1] = split.get(i);

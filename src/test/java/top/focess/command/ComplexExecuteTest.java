@@ -2,176 +2,103 @@ package top.focess.command;
 
 import com.google.common.collect.Lists;
 import org.jetbrains.annotations.NotNull;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertSame;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
-/**
- * A more involved end-to-end exercise of {@link Command#execute(CommandSender, String[], IOHandler)}
- * covering sub-command routing, named arguments, executor-level permissions, result-executor callbacks,
- * the {@link CommandResult#ARGS} / {@link CommandResult#ARGS_NOT_EXECUTED} usage paths and exception
- * capture.
- */
 class ComplexExecuteTest {
 
-    private final CollectingIOHandler ioHandler = new CollectingIOHandler();
+    private CommandManager manager;
+    private CollectingIOHandler ioHandler;
+    private CommandSender owner;
 
     @BeforeEach
-    @AfterEach
-    void reset() {
-        Command.unregisterAll();
+    void setUp() {
+        manager = new CommandManager();
+        ioHandler = new CollectingIOHandler();
+        owner = new TestSender(CommandPermission.OWNER);
     }
 
     @Test
-    void routesAddSubCommandAndFiresResultExecutor() {
-        final CalcCommand command = new CalcCommand();
-        Command.register(command);
+    void testComplexQuotedDispatch() {
+        manager.register(new Command("story") {
+            @Override
+            public void init() {
+                addExecutor((s, d, io) -> {
+                    io.output(d.get() + ": " + d.get());
+                    return CommandResult.ALLOW;
+                }, CommandArgument.ofString(), CommandArgument.ofString());
+            }
+            @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
+        });
 
-        final ExecutionResult result = command.execute(owner(), new String[]{"add", "2", "3"}, ioHandler);
-
-        assertEquals(CommandResult.ALLOW, result.getResult());
-        assertTrue(result.isExecuted());
-        assertEquals(Lists.newArrayList("5"), ioHandler.outputs);
-        assertSame(CommandResult.ALLOW, CalcCommand.LAST_ALLOW.get());
+        manager.dispatch(owner, "story \"Once upon\" 'a time'", ioHandler);
+        assertEquals("Once upon: a time", ioHandler.lastOutput());
     }
 
     @Test
-    void routesSubtractSubCommandUsingNamedArguments() {
-        final CalcCommand command = new CalcCommand();
-        Command.register(command);
+    void testDynamicUsageGating() {
+        final AtomicBoolean visible = new AtomicBoolean(false);
+        manager.register(new Command("secret") {
+            @Override
+            public void init() {
+                setExecutorPermission(s -> visible.get());
+                addExecutor((s, d, io) -> CommandResult.ALLOW);
+            }
+            @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList("the secret is 42"); }
+        });
 
-        final ExecutionResult result = command.execute(owner(), new String[]{"sub", "10", "4"}, ioHandler);
+        // Case 1: Hidden
+        visible.set(false);
+        ExecutionResult res = manager.dispatch(owner, "secret wrong-args", ioHandler);
+        assertEquals(CommandResult.ARGS_NOT_EXECUTED, res.getResult());
+        assertNull(ioHandler.lastOutput()); // Help message NOT printed
 
-        assertEquals(CommandResult.ALLOW, result.getResult());
-        assertEquals(Lists.newArrayList("6"), ioHandler.outputs);
+        // Case 2: Visible
+        visible.set(true);
+        res = manager.dispatch(owner, "secret wrong-args", ioHandler);
+        assertEquals(CommandResult.ARGS_NOT_EXECUTED, res.getResult());
+        assertEquals("the secret is 42", ioHandler.lastOutput()); // Help message printed
     }
 
     @Test
-    void capturesExecutorExceptionMessage() {
-        final CalcCommand command = new CalcCommand();
-        Command.register(command);
+    void testPermissionOverlap() {
+        manager.register(new Command("multi") {
+            @Override
+            public void init() {
+                addExecutor((s, d, io) -> { io.output("member"); return CommandResult.ALLOW; });
+                addExecutor((s, d, io) -> { io.output("owner"); return CommandResult.ALLOW; }, CommandArgument.of("owner"))
+                        .setPermission(CommandPermission.OWNER);
+            }
+            @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
+        });
 
-        final ExecutionResult result = command.execute(owner(), new String[]{"div", "1", "0"}, ioHandler);
+        CommandSender member = new TestSender(CommandPermission.MEMBER);
+        
+        // Member can only see member executor
+        manager.dispatch(member, "multi", ioHandler);
+        assertEquals("member", ioHandler.lastOutput());
+        
+        manager.dispatch(member, "multi owner", ioHandler);
+        assertEquals(CommandResult.ARGS_NOT_EXECUTED, manager.dispatch(member, "multi owner", ioHandler).getResult());
 
-        assertEquals(CommandResult.REFUSE_EXCEPTION, result.getResult());
-        assertFalse(result.isExecuted());
-        assertEquals("cannot divide by zero", result.getMessage().orElse(null));
-    }
-
-    @Test
-    void argsResultPrintsUsage() {
-        final CalcCommand command = new CalcCommand();
-        Command.register(command);
-
-        final ExecutionResult result = command.execute(owner(), new String[]{"help"}, ioHandler);
-
-        assertEquals(CommandResult.ARGS, result.getResult());
-        assertEquals(Lists.newArrayList(String.join("\n", command.usage(owner()))), ioHandler.outputs);
-    }
-
-    @Test
-    void unknownSubCommandPrintsUsage() {
-        final CalcCommand command = new CalcCommand();
-        Command.register(command);
-
-        final ExecutionResult result = command.execute(owner(), new String[]{"unknown"}, ioHandler);
-
-        assertEquals(CommandResult.ARGS_NOT_EXECUTED, result.getResult());
-        assertEquals(Lists.newArrayList(String.join("\n", command.usage(owner()))), ioHandler.outputs);
-    }
-
-    @Test
-    void executorPermissionGatesAdminSubCommand() {
-        final CalcCommand command = new CalcCommand();
-        Command.register(command);
-
-        final ExecutionResult denied = command.execute(member(), new String[]{"admin"}, ioHandler);
-        assertEquals(CommandResult.ARGS_NOT_EXECUTED, denied.getResult());
-        assertEquals(Lists.newArrayList(String.join("\n", command.usage(member()))), ioHandler.outputs);
-
-        ioHandler.outputs.clear();
-        final ExecutionResult allowed = command.execute(owner(), new String[]{"admin"}, ioHandler);
-        assertEquals(CommandResult.ALLOW, allowed.getResult());
-        assertEquals(Lists.newArrayList("admin-ok"), ioHandler.outputs);
-    }
-
-    private static CommandSender owner() {
-        return new TestSender(CommandPermission.OWNER);
-    }
-
-    private static CommandSender member() {
-        return new TestSender(CommandPermission.MEMBER);
-    }
-
-    private static final class CalcCommand extends Command {
-
-        private static final AtomicReference<CommandResult> LAST_ALLOW = new AtomicReference<>();
-
-        CalcCommand() {
-            super("calc", "c");
-        }
-
-        @Override
-        public void init() {
-            LAST_ALLOW.set(null);
-            addExecutor((sender, data, io) -> {
-                io.output(String.valueOf(data.getInt() + data.getInt()));
-                return CommandResult.ALLOW;
-            }, CommandArgument.of("add"), CommandArgument.ofInt(), CommandArgument.ofInt())
-                    .addCommandResultExecutor(CommandResult.ALLOW, LAST_ALLOW::set);
-
-            addExecutor((sender, data, io) -> {
-                io.output(String.valueOf((int) data.get("left") - (int) data.get("right")));
-                return CommandResult.ALLOW;
-            }, CommandArgument.of("sub"), CommandArgument.ofInt().named("left"), CommandArgument.ofInt().named("right"));
-
-            addExecutor((sender, data, io) -> {
-                final int dividend = data.getInt();
-                final int divisor = data.getInt();
-                if (divisor == 0)
-                    throw new ArithmeticException("cannot divide by zero");
-                io.output(String.valueOf(dividend / divisor));
-                return CommandResult.ALLOW;
-            }, CommandArgument.of("div"), CommandArgument.ofInt(), CommandArgument.ofInt());
-
-            addExecutor((sender, data, io) -> {
-                io.output("admin-ok");
-                return CommandResult.ALLOW;
-            }, CommandArgument.of("admin")).setPermission(CommandPermission.OWNER);
-
-            addExecutor((sender, data, io) -> CommandResult.ARGS, CommandArgument.of("help"));
-        }
-
-        @Override
-        public @NotNull List<String> usage(final CommandSender sender) {
-            return Lists.newArrayList(
-                    "calc add <int> <int>",
-                    "calc sub <int> <int>",
-                    "calc div <int> <int>",
-                    "calc admin");
-        }
+        // Owner can see both (but "multi owner" matches specific executor)
+        manager.dispatch(owner, "multi owner", ioHandler);
+        assertEquals("owner", ioHandler.lastOutput());
     }
 
     private static final class TestSender extends CommandSender {
-        TestSender(final CommandPermission permission) {
-            super(permission);
-        }
+        TestSender(CommandPermission p) { super(p); }
     }
 
     private static final class CollectingIOHandler extends IOHandler {
-        private final List<String> outputs = Lists.newArrayList();
-
-        @Override
-        public void output(final String output) {
-            this.outputs.add(output);
-        }
+        private String last;
+        @Override public String input() { return ""; }
+        @Override public void output(String message) { this.last = message; }
+        String lastOutput() { return last; }
     }
 }

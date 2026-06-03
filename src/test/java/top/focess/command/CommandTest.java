@@ -97,6 +97,25 @@ class CommandTest {
         assertEquals(CommandResult.COMMAND_REFUSED, result.getResult());
     }
 
+    @Test
+    void completionSuggestsCorrectly() {
+        final Command command = new AddCommand();
+        command.register(command); // Need registration for complete() to work
+
+        List<String> suggestions = command.complete(sender, new String[]{"add", ""});
+        assertTrue(suggestions.isEmpty()); // AddCommand uses Int converter which has no default suggestions
+
+        final Command boolCommand = new Command("bool") {
+            @Override public void init() { addExecutor((s, d, io) -> CommandResult.ALLOW, CommandArgument.of(DataConverter.BOOLEAN_DATA_CONVERTER)); }
+            @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
+        };
+        boolCommand.register(boolCommand);
+        
+        suggestions = boolCommand.complete(sender, new String[]{""});
+        assertTrue(suggestions.contains("true"));
+        assertTrue(suggestions.contains("false"));
+    }
+
     private static final class EchoCommand extends Command {
         EchoCommand() {
             super("echo", "e");

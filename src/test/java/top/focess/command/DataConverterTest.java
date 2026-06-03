@@ -2,6 +2,8 @@ package top.focess.command;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.List;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -42,5 +44,43 @@ class DataConverterTest {
     void defaultConverterAcceptsAnything() {
         assertTrue(DataConverter.DEFAULT_DATA_CONVERTER.accept("anything"));
         assertEquals("anything", DataConverter.DEFAULT_DATA_CONVERTER.convert("anything"));
+    }
+
+    private enum Color { RED, GREEN, BLUE }
+
+    @Test
+    void ofEnumIsCaseInsensitive() {
+        DataConverter<Color> converter = DataConverter.ofEnum(Color.class);
+        assertTrue(converter.accept("RED"));
+        assertTrue(converter.accept("green"));
+        assertFalse(converter.accept("yellow"));
+        assertEquals(Color.RED, converter.convert("red"));
+        assertEquals(Color.BLUE, converter.convert("BLUE"));
+    }
+
+    @Test
+    void ofChoicesSuggestsCorrectly() {
+        DataConverter<String> converter = DataConverter.ofChoices("apple", "banana");
+        CommandSender sender = new CommandSender(CommandPermission.MEMBER) {};
+        
+        List<String> suggestions = converter.complete(sender, "");
+        assertTrue(suggestions.contains("apple"));
+        assertTrue(suggestions.contains("banana"));
+
+        suggestions = converter.complete(sender, "app");
+        assertTrue(suggestions.contains("apple"));
+        assertFalse(suggestions.contains("banana"));
+    }
+
+    @Test
+    void booleanConverterSuggestsCorrectly() {
+        CommandSender sender = new CommandSender(CommandPermission.MEMBER) {};
+        List<String> suggestions = DataConverter.BOOLEAN_DATA_CONVERTER.complete(sender, "");
+        assertTrue(suggestions.contains("true"));
+        assertTrue(suggestions.contains("false"));
+
+        suggestions = DataConverter.BOOLEAN_DATA_CONVERTER.complete(sender, "t");
+        assertTrue(suggestions.contains("true"));
+        assertFalse(suggestions.contains("false"));
     }
 }
