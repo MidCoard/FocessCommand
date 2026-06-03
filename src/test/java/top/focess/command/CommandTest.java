@@ -116,6 +116,25 @@ class CommandTest {
         assertTrue(suggestions.contains("false"));
     }
 
+    @Test
+    void dynamicCompleterOverridesStaticConverter() {
+        final Command cmd = new Command("invite") {
+            @Override
+            public void init() {
+                addExecutor((s, d, io) -> CommandResult.ALLOW, 
+                    CommandArgument.ofString()
+                        .completer((sender, command, arg) -> Lists.newArrayList("alice", "bob")));
+            }
+            @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
+        };
+        cmd.register(cmd);
+
+        List<String> suggestions = cmd.complete(sender, new String[]{""});
+        assertTrue(suggestions.contains("alice"));
+        assertTrue(suggestions.contains("bob"));
+        assertEquals(2, suggestions.size());
+    }
+
     private static final class EchoCommand extends Command {
         EchoCommand() {
             super("echo", "e");

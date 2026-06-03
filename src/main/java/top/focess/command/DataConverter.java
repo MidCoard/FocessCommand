@@ -3,6 +3,7 @@ package top.focess.command;
 import com.google.common.collect.Lists;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import top.focess.command.converter.ExceptionDataConverter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -78,17 +79,6 @@ public abstract class DataConverter<T> {
         }
     };
 
-    /**
-     * Get the auto-complete suggestions for this argument
-     *
-     * @param sender the executor
-     * @param arg    the current argument
-     * @return the auto-complete suggestions
-     */
-    @NotNull
-    public List<String> complete(@NotNull final CommandSender sender, @NotNull final String arg) {
-        return List.of();
-    }
 
     /**
      * Never convert it! Put them into DataCollection with their original values.
@@ -334,4 +324,16 @@ public abstract class DataConverter<T> {
     }
 
     protected abstract Class<T> getTargetClass();
+
+    /**
+     * Get the auto-complete suggestions for this argument
+     *
+     * @param sender the executor
+     * @param arg    the current argument
+     * @return the auto-complete suggestions
+     */
+    @NotNull
+    public List<String> complete(@NotNull final CommandSender sender, @NotNull final String arg) {
+        return List.of();
+    }
 }

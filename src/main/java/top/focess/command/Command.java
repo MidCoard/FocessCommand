@@ -474,7 +474,7 @@ public abstract class Command {
         private void dfsComplete(@NotNull final CommandSender sender, @NotNull final String[] args, final int indexOfArgs, final int index, final int nullableCommandArguments, @NotNull final List<String> suggestions) {
             if (indexOfArgs == args.length - 1) {
                 if (index < this.commandArguments.length)
-                    suggestions.addAll(this.commandArguments[index].complete(sender, args[indexOfArgs]));
+                    suggestions.addAll(this.commandArguments[index].complete(sender, this.command, args));
                 if (this.commandArguments[index].isNullable() && nullableCommandArguments > 0 && index + 1 < this.commandArguments.length)
                     this.dfsComplete(sender, args, indexOfArgs, index + 1, nullableCommandArguments - 1, suggestions);
                 return;
