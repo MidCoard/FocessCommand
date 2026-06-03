@@ -36,15 +36,13 @@ public class LongBuffer extends DataBuffer<Long> {
         this.buffer.put(l);
     }
 
-    @NotNull
     @Override
     public Long get() {
-        return this.buffer.get();
+        return this.buffer.hasRemaining() ? this.buffer.get() : null;
     }
 
-    @NotNull
     @Override
     public Long get(final int index) {
-        return this.buffer.get(index);
+        return index >= 0 && index < this.buffer.limit() ? this.buffer.get(index) : null;
     }
 }

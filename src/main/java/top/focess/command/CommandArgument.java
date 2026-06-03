@@ -4,6 +4,8 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -28,6 +30,24 @@ public class CommandArgument<V> {
         this.dataConverter = dataConverter;
         this.value = null;
         this.isNullable = isNullable;
+    }
+
+    /**
+     * Get the auto-complete suggestions for this argument
+     *
+     * @param sender the executor
+     * @param arg    the current argument
+     * @return the auto-complete suggestions
+     */
+    @NotNull
+    public List<String> complete(@NotNull final CommandSender sender, @NotNull final String arg) {
+        if (this.isDefault()) {
+            final String valueString = String.valueOf(this.value);
+            if (valueString.toLowerCase().startsWith(arg.toLowerCase()))
+                return Collections.singletonList(valueString);
+            return Collections.emptyList();
+        }
+        return this.dataConverter.complete(sender, arg);
     }
 
     /**

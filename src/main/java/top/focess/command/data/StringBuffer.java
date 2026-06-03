@@ -36,21 +36,25 @@ public class StringBuffer extends DataBuffer<String> {
         this.intBuffer.flip();
     }
 
-    public void put(@NotNull final String s) {
-        this.charBuffers[this.pos] = CharBuffer.allocate(s.length()).put(s);
-        this.charBuffers[this.pos].flip();
+    public void put(final String s) {
+        if (s == null) {
+            this.charBuffers[this.pos] = null;
+        } else {
+            this.charBuffers[this.pos] = CharBuffer.allocate(s.length()).put(s);
+            this.charBuffers[this.pos].flip();
+        }
         this.intBuffer.put(this.pos++);
     }
 
-    @NotNull
     @Override
     public String get() {
-        return new String(this.charBuffers[this.intBuffer.get()].array());
+        CharBuffer cb = this.charBuffers[this.intBuffer.get()];
+        return cb == null ? null : new String(cb.array());
     }
 
-    @NotNull
     @Override
     public String get(final int index) {
-        return new String(this.charBuffers[this.intBuffer.get(index)].array());
+        CharBuffer cb = this.charBuffers[this.intBuffer.get(index)];
+        return cb == null ? null : new String(cb.array());
     }
 }

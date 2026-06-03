@@ -36,15 +36,13 @@ public class DoubleBuffer extends DataBuffer<Double> {
         this.buffer.put(d);
     }
 
-    @NotNull
     @Override
     public Double get() {
-        return this.buffer.get();
+        return this.buffer.hasRemaining() ? this.buffer.get() : null;
     }
 
-    @NotNull
     @Override
     public Double get(final int index) {
-        return this.buffer.get(index);
+        return index >= 0 && index < this.buffer.limit() ? this.buffer.get(index) : null;
     }
 }

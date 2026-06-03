@@ -7,9 +7,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Represent a Plugin class that can execute. Just like we use the terminal, we could use it to executing some commands. This is an important way to interact with FocessQQ Bot.
@@ -247,6 +249,24 @@ public abstract class Command {
         return ExecutionResult.of(result, message);
     }
 
+    /**
+     * Get the auto-complete suggestions for this command with special arguments.
+     *
+     * @param sender    the executor
+     * @param args      the arguments that command spilt by spaces, the last one is the partial argument
+     * @return the auto-complete suggestions
+     */
+    @NotNull
+    public final List<String> complete(@NotNull final CommandSender sender, @NotNull final String[] args) {
+        if (!this.isRegistered() || !sender.hasPermission(this.getPermission()))
+            return List.of();
+        final List<String> suggestions = Lists.newArrayList();
+        for (final Executor executor : this.executors)
+            if (sender.hasPermission(executor.permission) && executor.executorPermission.test(sender))
+                suggestions.addAll(executor.complete(sender, args));
+        return suggestions.stream().distinct().collect(Collectors.toList());
+    }
+
     @NotNull
     public CommandPermission getPermission() {
         return this.permission;
@@ -433,6 +453,29 @@ public abstract class Command {
                 commandArgumentList.remove(commandArgumentList.size() - 1);
             }
             return false;
+        }
+
+        @NotNull
+        private List<String> complete(@NotNull final CommandSender sender, @NotNull final String[] args) {
+            if (args.length > this.commandArguments.length)
+                return List.of();
+            final List<String> suggestions = Lists.newArrayList();
+            this.dfsComplete(sender, args, 0, 0, this.commandArguments.length - (args.length - 1), suggestions);
+            return suggestions;
+        }
+
+        private void dfsComplete(@NotNull final CommandSender sender, @NotNull final String[] args, final int indexOfArgs, final int index, final int nullableCommandArguments, @NotNull final List<String> suggestions) {
+            if (indexOfArgs == args.length - 1) {
+                if (index < this.commandArguments.length)
+                    suggestions.addAll(this.commandArguments[index].complete(sender, args[indexOfArgs]));
+                if (this.commandArguments[index].isNullable() && nullableCommandArguments > 0 && index + 1 < this.commandArguments.length)
+                    this.dfsComplete(sender, args, indexOfArgs, index + 1, nullableCommandArguments - 1, suggestions);
+                return;
+            }
+            if (this.commandArguments[index].isNullable() && nullableCommandArguments > 0)
+                this.dfsComplete(sender, args, indexOfArgs, index + 1, nullableCommandArguments - 1, suggestions);
+            if (this.commandArguments[index].accept(args[indexOfArgs]))
+                this.dfsComplete(sender, args, indexOfArgs + 1, index + 1, nullableCommandArguments, suggestions);
         }
     }
 }

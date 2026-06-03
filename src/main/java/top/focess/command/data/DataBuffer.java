@@ -26,7 +26,6 @@ public abstract class DataBuffer<T> {
      *
      * @return element in the buffer in order
      */
-    @NotNull
     public abstract T get();
 
     /**
@@ -35,6 +34,5 @@ public abstract class DataBuffer<T> {
      * @param index the element index
      * @return element in the index of the buffer
      */
-    @NotNull
     public abstract T get(int index);
 }

@@ -36,15 +36,13 @@ public class IntBuffer extends DataBuffer<Integer> {
         this.buffer.put(integer);
     }
 
-    @NotNull
     @Override
     public Integer get() {
-        return this.buffer.get();
+        return this.buffer.hasRemaining() ? this.buffer.get() : null;
     }
 
-    @NotNull
     @Override
     public Integer get(final int index) {
-        return this.buffer.get(index);
+        return index >= 0 && index < this.buffer.limit() ? this.buffer.get(index) : null;
     }
 }

@@ -9,6 +9,7 @@ import org.jetbrains.annotations.UnmodifiableView;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * An instance-based registry of {@link Command}s.
@@ -100,5 +101,91 @@ public class CommandManager {
     @UnmodifiableView
     public List<Command> getCommands() {
         return Collections.unmodifiableList(Lists.newArrayList(this.commands));
+    }
+
+    /**
+     * Get the auto-complete suggestions for the given input.
+     *
+     * @param sender    the executor
+     * @param input     the raw input string
+     * @return the auto-complete suggestions
+     */
+    @NotNull
+    public List<String> complete(@NotNull final CommandSender sender, @NotNull final String input) {
+        final List<String> split = split(input, true);
+        if (split.isEmpty())
+            return List.of();
+        if (split.size() <= 1) {
+            final String name = split.get(0).toLowerCase();
+            return this.commandsMap.keySet().stream()
+                    .filter(key -> key.startsWith(name))
+                    .filter(key -> {
+                        final Command command = this.commandsMap.get(key);
+                        return command != null && sender.hasPermission(command.getPermission());
+                    })
+                    .collect(Collectors.toList());
+        }
+        final Command command = this.get(split.get(0));
+        if (command == null)
+            return List.of();
+        final String[] args = new String[split.size() - 1];
+        for (int i = 1; i < split.size(); i++)
+            args[i - 1] = split.get(i);
+        return command.complete(sender, args);
+    }
+
+    /**
+     * Execute a command from a raw input string.
+     *
+     * @param sender    the executor
+     * @param input     the raw input string (e.g., "tp player 10 20 30")
+     * @param ioHandler the receiver
+     * @return the execution result
+     */
+    @NotNull
+    public ExecutionResult dispatch(@NotNull final CommandSender sender, @NotNull final String input, @NotNull final IOHandler ioHandler) {
+        final List<String> split = split(input, false);
+        if (split.isEmpty())
+            return ExecutionResult.of(CommandResult.NONE);
+        final Command command = this.get(split.get(0));
+        if (command == null)
+            return ExecutionResult.of(CommandResult.COMMAND_REFUSED);
+        final String[] args = new String[split.size() - 1];
+        for (int i = 1; i < split.size(); i++)
+            args[i - 1] = split.get(i);
+        return command.execute(sender, args, ioHandler);
+    }
+
+    @NotNull
+    private List<String> split(@NotNull String input, boolean includeTrailingEmpty) {
+        final List<String> result = Lists.newArrayList();
+        final StringBuilder current = new StringBuilder();
+        boolean inDoubleQuote = false;
+        boolean inSingleQuote = false;
+        boolean hasArg = false;
+        for (int i = 0; i < input.length(); i++) {
+            char c = input.charAt(i);
+            if (c == '\"' && !inSingleQuote) {
+                inDoubleQuote = !inDoubleQuote;
+                hasArg = true;
+            } else if (c == '\'' && !inDoubleQuote) {
+                inSingleQuote = !inSingleQuote;
+                hasArg = true;
+            } else if (Character.isWhitespace(c) && !inDoubleQuote && !inSingleQuote) {
+                if (hasArg || !current.isEmpty()) {
+                    result.add(current.toString());
+                    current.setLength(0);
+                    hasArg = false;
+                }
+            } else {
+                current.append(c);
+                hasArg = true;
+            }
+        }
+        if (hasArg || !current.isEmpty())
+            result.add(current.toString());
+        if (includeTrailingEmpty && (input.isEmpty() || (Character.isWhitespace(input.charAt(input.length() - 1)) && !inDoubleQuote && !inSingleQuote)))
+            result.add("");
+        return result;
     }
 }
