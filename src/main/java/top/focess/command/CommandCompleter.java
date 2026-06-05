@@ -18,5 +18,5 @@ public interface CommandCompleter {
      * @return the auto-complete suggestions
      */
     @NotNull
-    List<String> complete(@NotNull final CommandSender sender, @NotNull final Command command, @NotNull final String[] args);
+    List<CommandCompletion> complete(@NotNull final CommandSender sender, @NotNull final Command command, @NotNull final String[] args);
 }

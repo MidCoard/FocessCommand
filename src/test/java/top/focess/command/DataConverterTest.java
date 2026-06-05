@@ -63,24 +63,53 @@ class DataConverterTest {
         DataConverter<String> converter = DataConverter.ofChoices("apple", "banana");
         CommandSender sender = new CommandSender(CommandPermission.MEMBER) {};
         
-        List<String> suggestions = converter.complete(sender, "");
-        assertTrue(suggestions.contains("apple"));
-        assertTrue(suggestions.contains("banana"));
+        List<CommandCompletion> suggestions = converter.complete(sender, "");
+        List<String> candidates = suggestions.stream().map(CommandCompletion::candidate).toList();
+        assertTrue(candidates.contains("apple"));
+        assertTrue(candidates.contains("banana"));
 
         suggestions = converter.complete(sender, "app");
-        assertTrue(suggestions.contains("apple"));
-        assertFalse(suggestions.contains("banana"));
+        candidates = suggestions.stream().map(CommandCompletion::candidate).toList();
+        assertTrue(candidates.contains("apple"));
+        assertFalse(candidates.contains("banana"));
     }
 
     @Test
     void booleanConverterSuggestsCorrectly() {
         CommandSender sender = new CommandSender(CommandPermission.MEMBER) {};
-        List<String> suggestions = DataConverter.BOOLEAN_DATA_CONVERTER.complete(sender, "");
-        assertTrue(suggestions.contains("true"));
-        assertTrue(suggestions.contains("false"));
+        List<CommandCompletion> suggestions = DataConverter.BOOLEAN_DATA_CONVERTER.complete(sender, "");
+        List<String> candidates = suggestions.stream().map(CommandCompletion::candidate).toList();
+        assertTrue(candidates.contains("true"));
+        assertTrue(candidates.contains("false"));
 
         suggestions = DataConverter.BOOLEAN_DATA_CONVERTER.complete(sender, "t");
-        assertTrue(suggestions.contains("true"));
-        assertFalse(suggestions.contains("false"));
+        candidates = suggestions.stream().map(CommandCompletion::candidate).toList();
+        assertTrue(candidates.contains("true"));
+        assertFalse(candidates.contains("false"));
+    }
+
+    @Test
+    void ofChoicesWithDescriptionSuggestsCorrectly() {
+        java.util.Map<String, String> choices = new java.util.HashMap<>();
+        choices.put("apple", "A red fruit");
+        choices.put("banana", "A yellow fruit");
+        DataConverter<String> converter = DataConverter.ofChoices(choices);
+        CommandSender sender = new CommandSender(CommandPermission.MEMBER) {};
+
+        List<CommandCompletion> suggestions = converter.complete(sender, "app");
+        assertEquals(1, suggestions.size());
+        assertEquals("apple", suggestions.get(0).candidate());
+        assertEquals("A red fruit", suggestions.get(0).description());
+    }
+
+    @Test
+    void ofEnumWithDescriptionSuggestsCorrectly() {
+        DataConverter<Color> converter = DataConverter.ofEnum(Color.class, color -> "The color " + color.name().toLowerCase());
+        CommandSender sender = new CommandSender(CommandPermission.MEMBER) {};
+
+        List<CommandCompletion> suggestions = converter.complete(sender, "red");
+        assertEquals(1, suggestions.size());
+        assertEquals("red", suggestions.get(0).candidate());
+        assertEquals("The color red", suggestions.get(0).description());
     }
 }

@@ -37,6 +37,12 @@ public abstract class Command {
     private final List<String> aliases;
 
     /**
+     * The description of the command
+     */
+    @NotNull
+    private final String description;
+
+    /**
      * The manager this command is currently registered with, or null if it is not registered.
      */
     @Nullable
@@ -53,14 +59,16 @@ public abstract class Command {
     private Predicate<CommandSender> executorPermission;
 
     /**
-     * Instance a <code>Command</code> Class with special name and aliases.
+     * Instance a <code>Command</code> Class with special name, description and aliases.
      *
-     * @param name    the name of the command
-     * @param aliases the aliases of the command
+     * @param name        the name of the command
+     * @param description the description of the command
+     * @param aliases     the aliases of the command
      * @throws CommandLoadException if there is any exception thrown in the initializing process
      */
-    public Command(@NotNull final String name, @NotNull final String... aliases) {
+    public Command(@NotNull final String name, @NotNull final String description, @NotNull final String... aliases) {
         this.name = name;
+        this.description = java.util.Objects.requireNonNull(description, "description cannot be null");
         this.aliases = Lists.newArrayList(aliases);
         this.permission = CommandPermission.MEMBER;
         this.executorPermission = i -> true;
@@ -165,6 +173,11 @@ public abstract class Command {
         return this.aliases;
     }
 
+    @NotNull
+    public String getDescription() {
+        return this.description;
+    }
+
     public Predicate<CommandSender> getExecutorPermission() {
         return this.executorPermission;
     }
@@ -175,13 +188,14 @@ public abstract class Command {
 
     /**
      * Add default executor to define how to execute this command.
-     *
+     * <p>
      * for example :
      * <code>
      * this.addExecutor(... ,CommandArgument.ofString("example"),CommandArgument.ofString());
      * </code>
-     * which means that it runs when you execute the command with "example" "xxx".
      *
+     * which means that it runs when you execute the command with "example" "xxx".
+     * <p>
      * <code>
      * this.addExecutor(...);
      * </code>
@@ -263,10 +277,10 @@ public abstract class Command {
      * @return the auto-complete suggestions
      */
     @NotNull
-    public final List<String> complete(@NotNull final CommandSender sender, @NotNull final String[] args) {
+    public final List<CommandCompletion> complete(@NotNull final CommandSender sender, @NotNull final String[] args) {
         if (!this.isRegistered() || !sender.hasPermission(this.getPermission()))
             return List.of();
-        final List<String> suggestions = Lists.newArrayList();
+        final List<CommandCompletion> suggestions = Lists.newArrayList();
         for (final Executor executor : this.executors)
             // Consistent with execute(): check both static role and dynamic predicate.
             if (sender.hasPermission(executor.permission) && executor.executorPermission.test(sender))
@@ -463,15 +477,15 @@ public abstract class Command {
         }
 
         @NotNull
-        private List<String> complete(@NotNull final CommandSender sender, @NotNull final String[] args) {
+        private List<CommandCompletion> complete(@NotNull final CommandSender sender, @NotNull final String[] args) {
             if (args.length > this.commandArguments.length)
                 return List.of();
-            final List<String> suggestions = Lists.newArrayList();
+            final List<CommandCompletion> suggestions = Lists.newArrayList();
             this.dfsComplete(sender, args, 0, 0, this.commandArguments.length - (args.length - 1), suggestions);
             return suggestions;
         }
 
-        private void dfsComplete(@NotNull final CommandSender sender, @NotNull final String[] args, final int indexOfArgs, final int index, final int nullableCommandArguments, @NotNull final List<String> suggestions) {
+        private void dfsComplete(@NotNull final CommandSender sender, @NotNull final String[] args, final int indexOfArgs, final int index, final int nullableCommandArguments, @NotNull final List<CommandCompletion> suggestions) {
             if (indexOfArgs == args.length - 1) {
                 if (index < this.commandArguments.length)
                     suggestions.addAll(this.commandArguments[index].complete(sender, this.command, args));

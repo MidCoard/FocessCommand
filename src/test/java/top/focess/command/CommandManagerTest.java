@@ -73,7 +73,7 @@ class CommandManagerTest {
     void dispatchHandlesQuotedArguments() {
         final CommandManager manager = new CommandManager();
         final AtomicReference<String> argReceived = new AtomicReference<>();
-        manager.register(new Command("echo") {
+        manager.register(new Command("echo", "Echoes a message") {
             @Override
             public void init() {
                 addExecutor((s, d, io) -> {
@@ -98,27 +98,45 @@ class CommandManagerTest {
         manager.register(new NamedCommand("Apply"));
         final CommandSender sender = new CommandSender(CommandPermission.OWNER) {};
 
-        List<String> suggestions = manager.complete(sender, "app");
-        assertTrue(suggestions.contains("apple"));
-        assertTrue(suggestions.contains("apply"));
+        List<CommandCompletion> suggestions = manager.complete(sender, "app");
+        List<String> candidates = suggestions.stream().map(CommandCompletion::candidate).toList();
+        assertTrue(candidates.contains("apple"));
+        assertTrue(candidates.contains("apply"));
     }
 
     @Test
     void completeHandlesPartialQuotedInput() {
         final CommandManager manager = new CommandManager();
-        manager.register(new Command("test") {
+        manager.register(new Command("test", "A test command") {
             @Override public void init() { addExecutor((s, d, io) -> CommandResult.ALLOW, CommandArgument.of("sub item")); }
             @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
         });
         final CommandSender sender = new CommandSender(CommandPermission.OWNER) {};
 
-        List<String> suggestions = manager.complete(sender, "test \"sub ");
-        assertTrue(suggestions.contains("sub item"));
+        List<CommandCompletion> suggestions = manager.complete(sender, "test \"sub ");
+        List<String> candidates = suggestions.stream().map(CommandCompletion::candidate).toList();
+        assertTrue(candidates.contains("sub item"));
+    }
+
+    @Test
+    void completeSuggestsNamesWithDescription() {
+        final CommandManager manager = new CommandManager();
+        final Command command = new Command("greet", "Sends a greeting") {
+            @Override public void init() {}
+            @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
+        };
+        manager.register(command);
+        final CommandSender sender = new CommandSender(CommandPermission.OWNER) {};
+
+        List<CommandCompletion> suggestions = manager.complete(sender, "gre");
+        assertEquals(1, suggestions.size());
+        assertEquals("greet", suggestions.get(0).candidate());
+        assertEquals("Sends a greeting", suggestions.get(0).description());
     }
 
     private static final class NamedCommand extends Command {
         NamedCommand(final String name, final String... aliases) {
-            super(name, aliases);
+            super(name, "A command named " + name, aliases);
         }
 
         @Override

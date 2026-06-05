@@ -114,7 +114,7 @@ public class CommandManager {
      * @return the auto-complete suggestions
      */
     @NotNull
-    public List<String> complete(@NotNull final CommandSender sender, @NotNull final String input) {
+    public List<CommandCompletion> complete(@NotNull final CommandSender sender, @NotNull final String input) {
         final List<String> split = split(input, true);
         if (split.isEmpty())
             return List.of();
@@ -122,10 +122,13 @@ public class CommandManager {
             final String name = split.get(0).toLowerCase();
             return this.commandsMap.keySet().stream()
                     .filter(key -> key.startsWith(name))
-                    .filter(key -> {
+                    .map(key -> {
                         final Command command = this.commandsMap.get(key);
-                        return command != null && sender.hasPermission(command.getPermission());
+                        if (command != null && sender.hasPermission(command.getPermission()))
+                            return CommandCompletion.of(key, command.getDescription());
+                        return null;
                     })
+                    .filter(java.util.Objects::nonNull)
                     .collect(Collectors.toList());
         }
         final Command command = this.get(split.get(0));

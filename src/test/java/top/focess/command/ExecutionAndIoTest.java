@@ -80,7 +80,7 @@ class ExecutionAndIoTest {
 
     private static final class BoomCommand extends Command {
         BoomCommand() {
-            super("boom");
+            super("boom", "A command that throws an exception");
         }
 
         @Override
@@ -98,7 +98,7 @@ class ExecutionAndIoTest {
 
     private static final class OkCommand extends Command {
         OkCommand() {
-            super("ok");
+            super("ok", "A command that completes normally");
         }
 
         @Override

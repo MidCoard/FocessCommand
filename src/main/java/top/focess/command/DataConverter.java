@@ -8,6 +8,8 @@ import top.focess.command.converter.ExceptionDataConverter;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -181,12 +183,13 @@ public abstract class DataConverter<T> {
 
         @Override
         @NotNull
-        public List<String> complete(@NotNull final CommandSender sender, @NotNull final String arg) {
+        public List<CommandCompletion> complete(@NotNull final CommandSender sender, @NotNull final String arg) {
             final List<String> choices = List.of("true", "false");
             if (arg.isEmpty())
-                return choices;
+                return choices.stream().map(CommandCompletion::of).collect(Collectors.toList());
             return choices.stream()
                     .filter(s -> s.toLowerCase().startsWith(arg.toLowerCase()))
+                    .map(CommandCompletion::of)
                     .collect(Collectors.toList());
         }
 
@@ -206,6 +209,46 @@ public abstract class DataConverter<T> {
     @Contract("_ -> new")
     public static DataConverter<String> ofChoices(@NotNull final String... choices) {
         return ofChoices(Arrays.asList(choices));
+    }
+
+    /**
+     * Create a DataConverter that suggests fixed choices with descriptions.
+     *
+     * @param choices the available choices (candidate -> description)
+     * @return the DataConverter
+     */
+    @NotNull
+    @Contract("_ -> new")
+    public static DataConverter<String> ofChoices(@NotNull final Map<String, String> choices) {
+        return new DataConverter<String>() {
+            @Override
+            public boolean accept(String arg) {
+                return choices.containsKey(arg);
+            }
+
+            @Override
+            public String convert(String arg) {
+                return arg;
+            }
+
+            @Override
+            @NotNull
+            public List<CommandCompletion> complete(@NotNull CommandSender sender, @NotNull String arg) {
+                if (arg.isEmpty())
+                    return choices.entrySet().stream()
+                            .map(entry -> CommandCompletion.of(entry.getKey(), entry.getValue()))
+                            .collect(Collectors.toList());
+                return choices.entrySet().stream()
+                        .filter(entry -> entry.getKey().toLowerCase().startsWith(arg.toLowerCase()))
+                        .map(entry -> CommandCompletion.of(entry.getKey(), entry.getValue()))
+                        .collect(Collectors.toList());
+            }
+
+            @Override
+            protected Class<String> getTargetClass() {
+                return String.class;
+            }
+        };
     }
 
     /**
@@ -230,11 +273,12 @@ public abstract class DataConverter<T> {
 
             @Override
             @NotNull
-            public List<String> complete(@NotNull CommandSender sender, @NotNull String arg) {
+            public List<CommandCompletion> complete(@NotNull CommandSender sender, @NotNull String arg) {
                 if (arg.isEmpty())
-                    return choices;
+                    return choices.stream().map(CommandCompletion::of).collect(Collectors.toList());
                 return choices.stream()
                         .filter(s -> s.toLowerCase().startsWith(arg.toLowerCase()))
+                        .map(CommandCompletion::of)
                         .collect(Collectors.toList());
             }
 
@@ -255,6 +299,20 @@ public abstract class DataConverter<T> {
     @NotNull
     @Contract("_ -> new")
     public static <E extends Enum<E>> DataConverter<E> ofEnum(@NotNull final Class<E> enumClass) {
+        return ofEnum(enumClass, e -> null);
+    }
+
+    /**
+     * Create a DataConverter for an Enum class with custom descriptions.
+     *
+     * @param enumClass           the enum class
+     * @param descriptionFunction the function to get the description for an enum constant
+     * @param <E>                 the enum type
+     * @return the DataConverter
+     */
+    @NotNull
+    @Contract("_, _ -> new")
+    public static <E extends Enum<E>> DataConverter<E> ofEnum(@NotNull final Class<E> enumClass, @NotNull final Function<E, String> descriptionFunction) {
         return new DataConverter<E>() {
             @Override
             public boolean accept(String arg) {
@@ -274,15 +332,14 @@ public abstract class DataConverter<T> {
 
             @Override
             @NotNull
-            public List<String> complete(@NotNull CommandSender sender, @NotNull String arg) {
-                final List<String> names = Arrays.stream(enumClass.getEnumConstants())
-                        .map(Enum::name)
-                        .map(String::toLowerCase)
-                        .collect(Collectors.toList());
+            public List<CommandCompletion> complete(@NotNull CommandSender sender, @NotNull String arg) {
                 if (arg.isEmpty())
-                    return names;
-                return names.stream()
-                        .filter(s -> s.startsWith(arg.toLowerCase()))
+                    return Arrays.stream(enumClass.getEnumConstants())
+                            .map(e -> CommandCompletion.of(e.name().toLowerCase(), descriptionFunction.apply(e)))
+                            .collect(Collectors.toList());
+                return Arrays.stream(enumClass.getEnumConstants())
+                        .filter(e -> e.name().toLowerCase().startsWith(arg.toLowerCase()))
+                        .map(e -> CommandCompletion.of(e.name().toLowerCase(), descriptionFunction.apply(e)))
                         .collect(Collectors.toList());
             }
 
@@ -333,7 +390,7 @@ public abstract class DataConverter<T> {
      * @return the auto-complete suggestions
      */
     @NotNull
-    public List<String> complete(@NotNull final CommandSender sender, @NotNull final String arg) {
+    public List<CommandCompletion> complete(@NotNull final CommandSender sender, @NotNull final String arg) {
         return List.of();
     }
 }

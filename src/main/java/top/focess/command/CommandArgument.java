@@ -19,6 +19,8 @@ public class CommandArgument<V> {
     private final boolean isNullable;
     @Nullable
     private String name;
+    @Nullable
+    private String description;
 
     private CommandArgument(@NotNull final DataConverter<V> dataConverter, @Nullable final V value) {
         this.dataConverter = dataConverter;
@@ -56,14 +58,14 @@ public class CommandArgument<V> {
      * @return the auto-complete suggestions
      */
     @NotNull
-    public List<String> complete(@NotNull final CommandSender sender, @NotNull final Command command, @NotNull final String[] args) {
+    public List<CommandCompletion> complete(@NotNull final CommandSender sender, @NotNull final Command command, @NotNull final String[] args) {
         if (this.completer != null)
             return this.completer.complete(sender, command, args);
         final String arg = args[args.length - 1];
         if (this.isDefault()) {
             final String valueString = String.valueOf(this.value);
             if (valueString.toLowerCase().startsWith(arg.toLowerCase()))
-                return Collections.singletonList(valueString);
+                return Collections.singletonList(CommandCompletion.of(valueString, this.description));
             return Collections.emptyList();
         }
         return this.dataConverter.complete(sender, arg);
@@ -180,6 +182,18 @@ public class CommandArgument<V> {
     @NotNull
     public CommandArgument<V> named(@NotNull final String name) {
         this.name = name;
+        return this;
+    }
+
+    /**
+     * Assign a description to this argument.
+     *
+     * @param description the description of the argument
+     * @return this argument, for chaining
+     */
+    @NotNull
+    public CommandArgument<V> description(@NotNull final String description) {
+        this.description = description;
         return this;
     }
 

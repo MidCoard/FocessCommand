@@ -102,42 +102,62 @@ class CommandTest {
         final Command command = new AddCommand();
         command.register(command); // Need registration for complete() to work
 
-        List<String> suggestions = command.complete(sender, new String[]{"add", ""});
+        List<CommandCompletion> suggestions = command.complete(sender, new String[]{"add", ""});
         assertTrue(suggestions.isEmpty()); // AddCommand uses Int converter which has no default suggestions
 
-        final Command boolCommand = new Command("bool") {
+        final Command boolCommand = new Command("bool", "A boolean command") {
             @Override public void init() { addExecutor((s, d, io) -> CommandResult.ALLOW, CommandArgument.of(DataConverter.BOOLEAN_DATA_CONVERTER)); }
             @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
         };
         boolCommand.register(boolCommand);
         
         suggestions = boolCommand.complete(sender, new String[]{""});
-        assertTrue(suggestions.contains("true"));
-        assertTrue(suggestions.contains("false"));
+        List<String> candidates = suggestions.stream().map(CommandCompletion::candidate).toList();
+        assertTrue(candidates.contains("true"));
+        assertTrue(candidates.contains("false"));
     }
 
     @Test
     void dynamicCompleterOverridesStaticConverter() {
-        final Command cmd = new Command("invite") {
+        final Command cmd = new Command("invite", "Invites a user") {
             @Override
             public void init() {
                 addExecutor((s, d, io) -> CommandResult.ALLOW, 
                     CommandArgument.ofString()
-                        .completer((sender, command, arg) -> Lists.newArrayList("alice", "bob")));
+                        .completer((sender, command, arg) -> Lists.newArrayList(CommandCompletion.of("alice"), CommandCompletion.of("bob"))));
             }
             @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
         };
         cmd.register(cmd);
 
-        List<String> suggestions = cmd.complete(sender, new String[]{""});
-        assertTrue(suggestions.contains("alice"));
-        assertTrue(suggestions.contains("bob"));
+        List<CommandCompletion> suggestions = cmd.complete(sender, new String[]{""});
+        List<String> candidates = suggestions.stream().map(CommandCompletion::candidate).toList();
+        assertTrue(candidates.contains("alice"));
+        assertTrue(candidates.contains("bob"));
         assertEquals(2, suggestions.size());
+    }
+
+    @Test
+    void literalArgumentWithDescriptionCompletion() {
+        final Command cmd = new Command("test", "A test command") {
+            @Override
+            public void init() {
+                addExecutor((s, d, io) -> CommandResult.ALLOW, 
+                    CommandArgument.of("sub").description("A sub-command"));
+            }
+            @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
+        };
+        cmd.register(cmd);
+
+        List<CommandCompletion> suggestions = cmd.complete(sender, new String[]{""});
+        assertEquals(1, suggestions.size());
+        assertEquals("sub", suggestions.get(0).candidate());
+        assertEquals("A sub-command", suggestions.get(0).description());
     }
 
     private static final class EchoCommand extends Command {
         EchoCommand() {
-            super("echo", "e");
+            super("echo", "Echoes the input message", "e");
         }
 
         @Override
@@ -156,7 +176,7 @@ class CommandTest {
 
     private static final class AliasClashCommand extends Command {
         AliasClashCommand() {
-            super("other", "e");
+            super("other", "Another command", "e");
         }
 
         @Override
@@ -172,7 +192,7 @@ class CommandTest {
 
     private static final class AddCommand extends Command {
         AddCommand() {
-            super("add");
+            super("add", "Adds a number");
         }
 
         @Override

@@ -25,7 +25,7 @@ class ComplexExecuteTest {
 
     @Test
     void testComplexQuotedDispatch() {
-        manager.register(new Command("story") {
+        manager.register(new Command("story", "A story command") {
             @Override
             public void init() {
                 addExecutor((s, d, io) -> {
@@ -43,7 +43,7 @@ class ComplexExecuteTest {
     @Test
     void testDynamicUsageGating() {
         final AtomicBoolean visible = new AtomicBoolean(false);
-        manager.register(new Command("secret") {
+        manager.register(new Command("secret", "A secret command") {
             @Override
             public void init() {
                 setExecutorPermission(s -> visible.get());
@@ -67,7 +67,7 @@ class ComplexExecuteTest {
 
     @Test
     void testPermissionOverlap() {
-        manager.register(new Command("multi") {
+        manager.register(new Command("multi", "A multi-argument command") {
             @Override
             public void init() {
                 addExecutor((s, d, io) -> { io.output("member"); return CommandResult.ALLOW; });
