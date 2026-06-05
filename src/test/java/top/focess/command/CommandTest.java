@@ -110,7 +110,7 @@ class CommandTest {
             @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
         };
         boolCommand.register(boolCommand);
-        
+
         suggestions = boolCommand.complete(sender, new String[]{""});
         List<String> candidates = suggestions.stream().map(CommandCompletion::candidate).toList();
         assertTrue(candidates.contains("true"));
@@ -122,9 +122,9 @@ class CommandTest {
         final Command cmd = new Command("invite", "Invites a user") {
             @Override
             public void init() {
-                addExecutor((s, d, io) -> CommandResult.ALLOW, 
-                    CommandArgument.ofString()
-                        .completer((sender, command, arg) -> Lists.newArrayList(CommandCompletion.of("alice"), CommandCompletion.of("bob"))));
+                addExecutor((s, d, io) -> CommandResult.ALLOW,
+                        CommandArgument.ofString()
+                                .completer((sender, command, arg) -> Lists.newArrayList(CommandCompletion.of("alice"), CommandCompletion.of("bob"))));
             }
             @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
         };
@@ -142,8 +142,8 @@ class CommandTest {
         final Command cmd = new Command("test", "A test command") {
             @Override
             public void init() {
-                addExecutor((s, d, io) -> CommandResult.ALLOW, 
-                    CommandArgument.of("sub").description("A sub-command"));
+                addExecutor((s, d, io) -> CommandResult.ALLOW,
+                        CommandArgument.of("sub").description("A sub-command"));
             }
             @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
         };
