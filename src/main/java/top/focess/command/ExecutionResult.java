@@ -14,7 +14,7 @@ import java.util.Optional;
  * This complements the compact {@link CommandResult} bitmask by letting callers receive additional
  * feedback without having to catch exceptions themselves.
  *
- * @see Command#execute(CommandSender, String[], IOHandler)
+ * @see CommandManager#dispatch(CommandSender, String)
  */
 public final class ExecutionResult {
 

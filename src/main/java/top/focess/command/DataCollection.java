@@ -29,6 +29,8 @@ public class DataCollection {
 
     private final Map<String, Object> namedValues = Maps.newHashMap();
 
+    private int size = 0;
+
     /**
      * Initialize the DataCollection with fixed size.
      *
@@ -230,6 +232,19 @@ public class DataCollection {
 
     void writeNamed(@NotNull final String name, final Object value) {
         this.namedValues.put(name, value);
+    }
+
+    /**
+     * Get the number of arguments in this collection.
+     *
+     * @return the number of arguments
+     */
+    public int size() {
+        return this.size;
+    }
+
+    void setSize(int size) {
+        this.size = size;
     }
 
     /**

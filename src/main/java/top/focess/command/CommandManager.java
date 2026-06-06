@@ -6,50 +6,29 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.UnmodifiableView;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * An instance-based registry of {@link Command}s.
  * <p>
- * Unlike the static convenience methods on {@link Command} (which delegate to a single shared
- * {@link #getDefault() default} manager), each {@code CommandManager} owns an isolated command
- * namespace. This makes it possible to scope commands per host/plugin and to test registration
- * behavior without touching global state.
+ * This class handles the registration of commands and provides the entry point
+ * for routing, dispatching, and completion.
  */
 public class CommandManager {
 
     private static final CommandManager DEFAULT = new CommandManager();
 
-    /**
-     * Lookup map keyed by lower-cased command name and aliases.
-     */
     private final Map<String, Command> commandsMap = Maps.newHashMap();
-
-    /**
-     * All currently registered commands (each command appears once).
-     */
     private final List<Command> commands = Lists.newArrayList();
 
-    /**
-     * Get the shared default command manager backing the static {@link Command} methods.
-     *
-     * @return the default command manager
-     */
     @NotNull
     public static CommandManager getDefault() {
         return DEFAULT;
     }
 
-    /**
-     * Register the command in this manager.
-     *
-     * @param command the command that need to be registered
-     * @throws CommandDuplicateException if the command name or any alias already exists in this manager
-     * @throws IllegalStateException     if the command is not initialized
-     */
     public void register(@NotNull final Command command) {
         final List<String> keys = command.lookupKeys();
         for (final String key : keys)
@@ -61,11 +40,6 @@ public class CommandManager {
         command.setManager(this);
     }
 
-    /**
-     * Unregister the command from this manager.
-     *
-     * @param command the command that need to be unregistered
-     */
     public void unregister(@NotNull final Command command) {
         if (this.commands.remove(command)) {
             for (final String key : command.lookupKeys())
@@ -74,9 +48,6 @@ public class CommandManager {
         }
     }
 
-    /**
-     * Unregister all commands registered in this manager.
-     */
     public void unregisterAll() {
         for (final Command command : this.commands)
             command.clearManager();
@@ -84,22 +55,11 @@ public class CommandManager {
         this.commandsMap.clear();
     }
 
-    /**
-     * Get a registered command by its name or one of its aliases (case-insensitive).
-     *
-     * @param name the name or alias of the command
-     * @return the matching command, or null if none is registered under that key
-     */
     @Nullable
     public Command get(@NotNull final String name) {
         return this.commandsMap.get(name.toLowerCase());
     }
 
-    /**
-     * Get all commands registered in this manager.
-     *
-     * @return all commands as an unmodifiable list
-     */
     @NotNull
     @UnmodifiableView
     public List<Command> getCommands() {
@@ -107,79 +67,74 @@ public class CommandManager {
     }
 
     /**
-     * Get the auto-complete suggestions for the given input.
-     *
-     * @param sender    the executor
-     * @param input     the raw input string
-     * @return the auto-complete suggestions
+     * Get auto-complete suggestions for the given input.
      */
     @NotNull
     public List<CommandCompletion> complete(@NotNull final CommandSender sender, @NotNull final String input) {
-        final List<String> split = split(input, true);
-        if (split.isEmpty())
-            return List.of();
-        if (split.size() == 1) {
-            final String name = split.get(0).toLowerCase();
-            return this.commandsMap.keySet().stream()
-                    .filter(key -> key.startsWith(name))
-                    .map(key -> {
-                        final Command command = this.commandsMap.get(key);
-                        if (command != null && sender.hasPermission(command.getPermission()))
-                            return CommandCompletion.of(key, command.getDescription());
-                        return null;
-                    })
-                    .filter(java.util.Objects::nonNull)
-                    .collect(Collectors.toList());
-        }
-        final Command command = this.get(split.get(0));
-        if (command == null)
-            return List.of();
-        final String[] args = new String[split.size() - 1];
-        for (int i = 1; i < split.size(); i++)
-            args[i - 1] = split.get(i);
-        return command.complete(sender, args);
+        return this.route(sender, input).getCompletions();
     }
 
     /**
-     * Execute a command from a raw input string.
-     *
-     * @param sender    the executor
-     * @param input     the raw input string (e.g., "tp player 10 20 30")
-     * @param ioHandler the receiver
-     * @return the execution result
+     * Dispatch and execute a command from raw input.
      */
     @NotNull
-    public ExecutionResult dispatch(@NotNull final CommandSender sender, @NotNull final String input, @NotNull final IOHandler ioHandler) {
-        final List<String> split = split(input, false);
-        if (split.isEmpty())
-            return ExecutionResult.of(CommandResult.NONE);
-        final Command command = this.get(split.get(0));
-        if (command == null)
-            return ExecutionResult.of(CommandResult.COMMAND_NOT_FOUND);
-        final String[] args = new String[split.size() - 1];
-        for (int i = 1; i < split.size(); i++)
-            args[i - 1] = split.get(i);
-        return command.execute(sender, args, ioHandler);
+    public ExecutionResult dispatch(@NotNull final CommandSender sender, @NotNull final String input) {
+        return this.route(sender, input).execute();
+    }
+
+    /**
+     * Resolves the input into a CommandRoute context.
+     */
+    @NotNull
+    public CommandRoute route(@NotNull CommandSender sender, @NotNull String input) {
+        return new CommandRoute(sender, input, tokenize(input)).resolve(this);
+    }
+
+    public static class Token {
+        public final String content;
+        public final boolean isQuoted;
+        public final boolean isUnclosed;
+
+        Token(String content, boolean isQuoted, boolean isUnclosed) {
+            this.content = content;
+            this.isQuoted = isQuoted;
+            this.isUnclosed = isUnclosed;
+        }
     }
 
     @NotNull
-    private List<String> split(@NotNull String input, boolean includeTrailingEmpty) {
-        final List<String> result = Lists.newArrayList();
-        final StringBuilder current = new StringBuilder();
+    private List<Token> tokenize(@NotNull String input) {
+        List<Token> tokens = new ArrayList<>();
+        StringBuilder current = new StringBuilder();
         boolean inDoubleQuote = false;
         boolean inSingleQuote = false;
         boolean hasArg = false;
+        
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
             if (c == '\"' && !inSingleQuote) {
-                inDoubleQuote = !inDoubleQuote;
-                hasArg = true;
+                if (inDoubleQuote) {
+                    tokens.add(new Token(current.toString(), true, false));
+                    current.setLength(0);
+                    inDoubleQuote = false;
+                    hasArg = false;
+                } else {
+                    inDoubleQuote = true;
+                    hasArg = true;
+                }
             } else if (c == '\'' && !inDoubleQuote) {
-                inSingleQuote = !inSingleQuote;
-                hasArg = true;
+                if (inSingleQuote) {
+                    tokens.add(new Token(current.toString(), true, false));
+                    current.setLength(0);
+                    inSingleQuote = false;
+                    hasArg = false;
+                } else {
+                    inSingleQuote = true;
+                    hasArg = true;
+                }
             } else if (Character.isWhitespace(c) && !inDoubleQuote && !inSingleQuote) {
                 if (hasArg || !current.isEmpty()) {
-                    result.add(current.toString());
+                    tokens.add(new Token(current.toString(), false, false));
                     current.setLength(0);
                     hasArg = false;
                 }
@@ -188,10 +143,17 @@ public class CommandManager {
                 hasArg = true;
             }
         }
-        if (hasArg || !current.isEmpty())
-            result.add(current.toString());
-        if (includeTrailingEmpty && (input.isEmpty() || (Character.isWhitespace(input.charAt(input.length() - 1)) && !inDoubleQuote && !inSingleQuote)))
-            result.add("");
-        return result;
+        
+        if (inDoubleQuote || inSingleQuote) {
+            tokens.add(new Token(current.toString(), true, true));
+        } else if (hasArg || !current.isEmpty()) {
+            tokens.add(new Token(current.toString(), false, false));
+        }
+
+        if (input.isEmpty() || (Character.isWhitespace(input.charAt(input.length() - 1)) && !inDoubleQuote && !inSingleQuote)) {
+            tokens.add(new Token("", false, false));
+        }
+        
+        return tokens;
     }
 }

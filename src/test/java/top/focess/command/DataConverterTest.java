@@ -1,5 +1,6 @@
 package top.focess.command;
 
+import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -61,7 +62,11 @@ class DataConverterTest {
     @Test
     void ofChoicesSuggestsCorrectly() {
         DataConverter<String> converter = DataConverter.ofChoices("apple", "banana");
-        CommandSender sender = new CommandSender(CommandPermission.MEMBER) {};
+        CommandSender sender = new CommandSender() {
+            @Override @NotNull public CommandPermission getPermission() { return CommandPermission.EVERYONE; }
+            @Override @NotNull public String input() { return ""; }
+            @Override public void output(@NotNull String message) {}
+        };
         
         List<CommandCompletion> suggestions = converter.complete(sender, "");
         List<String> candidates = suggestions.stream().map(CommandCompletion::candidate).toList();
@@ -76,7 +81,11 @@ class DataConverterTest {
 
     @Test
     void booleanConverterSuggestsCorrectly() {
-        CommandSender sender = new CommandSender(CommandPermission.MEMBER) {};
+        CommandSender sender = new CommandSender() {
+            @Override @NotNull public CommandPermission getPermission() { return CommandPermission.EVERYONE; }
+            @Override @NotNull public String input() { return ""; }
+            @Override public void output(@NotNull String message) {}
+        };
         List<CommandCompletion> suggestions = DataConverter.BOOLEAN_DATA_CONVERTER.complete(sender, "");
         List<String> candidates = suggestions.stream().map(CommandCompletion::candidate).toList();
         assertTrue(candidates.contains("true"));
@@ -94,7 +103,11 @@ class DataConverterTest {
         choices.put("apple", "A red fruit");
         choices.put("banana", "A yellow fruit");
         DataConverter<String> converter = DataConverter.ofChoices(choices);
-        CommandSender sender = new CommandSender(CommandPermission.MEMBER) {};
+        CommandSender sender = new CommandSender() {
+            @Override @NotNull public CommandPermission getPermission() { return CommandPermission.EVERYONE; }
+            @Override @NotNull public String input() { return ""; }
+            @Override public void output(@NotNull String message) {}
+        };
 
         List<CommandCompletion> suggestions = converter.complete(sender, "app");
         assertEquals(1, suggestions.size());
@@ -105,7 +118,11 @@ class DataConverterTest {
     @Test
     void ofEnumWithDescriptionSuggestsCorrectly() {
         DataConverter<Color> converter = DataConverter.ofEnum(Color.class, color -> "The color " + color.name().toLowerCase());
-        CommandSender sender = new CommandSender(CommandPermission.MEMBER) {};
+        CommandSender sender = new CommandSender() {
+            @Override @NotNull public CommandPermission getPermission() { return CommandPermission.EVERYONE; }
+            @Override @NotNull public String input() { return ""; }
+            @Override public void output(@NotNull String message) {}
+        };
 
         List<CommandCompletion> suggestions = converter.complete(sender, "red");
         assertEquals(1, suggestions.size());

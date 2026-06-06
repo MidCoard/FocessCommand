@@ -18,10 +18,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExecutionAndIoTest {
 
-    private final CollectingIOHandler ioHandler = new CollectingIOHandler();
-    private final CommandSender sender = new TestSender(CommandPermission.OWNER);
+    private TestSender sender;
+    private CommandManager manager;
 
     @BeforeEach
+    void setUp() {
+        manager = new CommandManager();
+        sender = new TestSender(CommandPermission.OWNER);
+    }
+
     @AfterEach
     void reset() {
         Command.unregisterAll();
@@ -30,9 +35,9 @@ class ExecutionAndIoTest {
     @Test
     void executeCapturesExceptionMessageWithoutThrowing() {
         final Command command = new BoomCommand();
-        Command.register(command);
+        manager.register(command);
 
-        final ExecutionResult result = command.execute(sender, new String[]{"boom"}, ioHandler);
+        final ExecutionResult result = manager.dispatch(sender, "boom boom");
 
         assertEquals(CommandResult.REFUSE_EXCEPTION, result.getResult());
         assertEquals("kaboom", result.getMessage().orElse(null));
@@ -42,9 +47,9 @@ class ExecutionAndIoTest {
     @Test
     void executeWrapsSuccess() {
         final Command command = new OkCommand();
-        Command.register(command);
+        manager.register(command);
 
-        final ExecutionResult result = command.execute(sender, new String[]{"ok"}, ioHandler);
+        final ExecutionResult result = manager.dispatch(sender, "ok ok");
 
         assertEquals(CommandResult.ALLOW, result.getResult());
         assertTrue(result.isExecuted());
@@ -53,16 +58,16 @@ class ExecutionAndIoTest {
 
     @Test
     void inputAsyncCompletesWhenInputArrives() throws Exception {
-        final CompletableFuture<String> future = ioHandler.inputAsync();
+        final CompletableFuture<String> future = sender.inputAsync();
         // input arrives later from another thread
-        CompletableFuture.runAsync(() -> ioHandler.input("answer"));
+        CompletableFuture.runAsync(() -> sender.input("answer"));
 
         assertEquals("answer", future.get(5, TimeUnit.SECONDS));
     }
 
     @Test
     void inputAsyncTimesOut() {
-        final CompletableFuture<String> future = ioHandler.inputAsync(50);
+        final CompletableFuture<String> future = sender.inputAsync(50);
         assertThrowsInputTimeout(future);
     }
 
@@ -85,7 +90,7 @@ class ExecutionAndIoTest {
 
         @Override
         public void init() {
-            addExecutor((s, data, io) -> {
+            addExecutor((s, data) -> {
                 throw new IllegalStateException("kaboom");
             }, CommandArgument.of("boom"));
         }
@@ -103,7 +108,7 @@ class ExecutionAndIoTest {
 
         @Override
         public void init() {
-            addExecutor((s, data, io) -> CommandResult.ALLOW, CommandArgument.of("ok"));
+            addExecutor((s, data) -> CommandResult.ALLOW, CommandArgument.of("ok"));
         }
 
         @Override
@@ -112,18 +117,11 @@ class ExecutionAndIoTest {
         }
     }
 
-    private static final class TestSender extends CommandSender {
+    private static final class TestSender extends AbstractCommandSender {
         TestSender(final CommandPermission permission) {
             super(permission);
         }
-    }
-
-    private static final class CollectingIOHandler extends IOHandler {
-        private final List<String> outputs = Lists.newArrayList();
-
-        @Override
-        public void output(final String output) {
-            this.outputs.add(output);
-        }
+        @Override public @NotNull String input() { return ""; }
+        @Override public void output(@NotNull String message) {}
     }
 }

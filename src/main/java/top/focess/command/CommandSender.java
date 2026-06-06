@@ -1,16 +1,25 @@
 package top.focess.command;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
+
 /**
- * This class present an executor to execute command. We can use it to distinguish different permissions.
+ * Represent an executor that has certain permissions and can interact with the command system.
+ * <p>
+ * This interface unifies the previous CommandSender and IOHandler, providing both
+ * permission checks and I/O capabilities (input/output).
  */
-public abstract class CommandSender {
+public interface CommandSender {
 
-
-    private final CommandPermission permission;
-
-    public CommandSender(CommandPermission commandPermission) {
-        this.permission = commandPermission;
-    }
+    /**
+     * Get the permission level of this sender.
+     *
+     * @return the command permission
+     */
+    @NotNull
+    CommandPermission getPermission();
 
     /**
      * Indicate this CommandSender owns the permission
@@ -18,7 +27,52 @@ public abstract class CommandSender {
      * @param permission the compared permission
      * @return true if the permission of this CommandSender is higher or equivalent to the compared permission, false otherwise
      */
-    public boolean hasPermission(final CommandPermission permission) {
-        return this.permission.hasPermission(permission);
+    default boolean hasPermission(@NotNull CommandPermission permission) {
+        return this.getPermission().hasPermission(permission);
+    }
+
+    /**
+     * Read an input string from the sender.
+     *
+     * @return the input string
+     */
+    @NotNull
+    String input();
+
+    /**
+     * Send an output message to the sender.
+     *
+     * @param message the message to send
+     */
+    void output(@NotNull String message);
+
+    /**
+     * Wait for input asynchronously with a default timeout of 10 minutes.
+     *
+     * @return a future that completes with the input
+     */
+    @NotNull
+    default CompletableFuture<String> inputAsync() {
+        return this.inputAsync(TimeUnit.MINUTES.toMillis(10));
+    }
+
+    /**
+     * Wait for input asynchronously with a specific timeout.
+     *
+     * @param timeoutMillis the timeout in milliseconds
+     * @return a future that completes with the input or fails with InputTimeoutException
+     */
+    @NotNull
+    default CompletableFuture<String> inputAsync(long timeoutMillis) {
+        throw new UnsupportedOperationException("Async input is not supported by this CommandSender.");
+    }
+
+    /**
+     * Provide input to this sender, potentially completing an async wait.
+     *
+     * @param input the input string
+     */
+    default void input(@NotNull String input) {
+        throw new UnsupportedOperationException("Async input is not supported by this CommandSender.");
     }
 }

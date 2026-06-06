@@ -4,48 +4,39 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Represents an executing permission of a command.
+ * Represents the permission levels for commands.
  */
 public enum CommandPermission {
 
     /**
-     * It is an Administrator permission in group
+     * Permission granted to everyone.
      */
-    ADMINISTRATOR(3),
-    /**
-     * It is an Owner permission in group
-     */
-    OWNER(5),
-    /**
-     * It is a Member permission in group
-     */
-    MEMBER(0),
-    /**
-     * It is a Friend permission
-     */
-    FRIEND(OWNER);
+    EVERYONE(0),
 
     /**
-     * The permission level
+     * Permission for administrators.
      */
-    final int priority;
+    ADMINISTRATOR(10),
 
-    CommandPermission( final int priority) {
+    /**
+     * Permission for the owner/root user.
+     */
+    OWNER(100);
+
+    private final int priority;
+
+    CommandPermission(int priority) {
         this.priority = priority;
     }
 
-    CommandPermission(@NotNull final CommandPermission commandPermission) {
-        this.priority = commandPermission.priority;
-    }
-
     /**
-     * Indicate this permission is higher than the comparing permission
+     * Check if this permission level is higher or equal to another.
      *
-     * @param permission the comparing permission
-     * @return true if this permission is higher than the comparing permission, false otherwise
+     * @param permission the other permission
+     * @return true if satisfied, false otherwise
      */
     @Contract(pure = true)
-    public boolean hasPermission(@NotNull final CommandPermission permission) {
+    public boolean hasPermission(@NotNull CommandPermission permission) {
         return this.priority >= permission.priority;
     }
 }
