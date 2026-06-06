@@ -17,7 +17,7 @@ import java.util.Objects;
  * matched for the current execution path. It allows for flexible data retrieval using 
  * three different strategies:
  * 
- * <h3>Retrieval Strategies</h3>
+ * <h2>Retrieval Strategies</h2>
  * <ul>
  *   <li><b>Positional/Typed:</b> Retrieve the next available argument of a specific type 
  *       (e.g., {@link #getInt()}, {@link #get(Class)}). This is stateful; each call 

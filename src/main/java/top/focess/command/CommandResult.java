@@ -133,22 +133,49 @@ public enum CommandResult {
         return ret;
     }
 
+    /**
+     * Gets the bitmask value of this result.
+     *
+     * @return The integer bitmask.
+     */
     public int getValue() {
-        return this.value;
+        return value;
     }
 
+    /**
+     * Checks if this result (or aggregate) contains the specified result.
+     *
+     * @param result The result to check for.
+     * @return {@code true} if the result is part of this bitmask, {@code false} otherwise.
+     */
     public boolean contains(final CommandResult result) {
-        return (this.value & result.getValue()) == result.getValue();
+        return (this.getValue() & result.getValue()) == result.getValue();
     }
 
+    /**
+     * Checks if this result represents a state where an executor was actually invoked.
+     *
+     * @return {@code true} if the result is in the {@link #EXECUTED} set.
+     */
     public boolean isExecuted() {
         return this != NONE && EXECUTED.contains(this);
     }
 
+    /**
+     * Checks if this result represents a state that can be tracked by a 
+     * {@link CommandResultExecutor}.
+     *
+     * @return {@code true} if the result is in the {@link #TRACKABLE} set.
+     */
     public boolean isTrackable() {
         return this != NONE && TRACKABLE.contains(this);
     }
 
+    /**
+     * Checks if this result represents a state that requires explicit handling by the caller.
+     *
+     * @return {@code true} if the result is in the {@link #EXPLICIT} set.
+     */
     public boolean isExplicit() {
         return this != NONE && EXPLICIT.contains(this);
     }

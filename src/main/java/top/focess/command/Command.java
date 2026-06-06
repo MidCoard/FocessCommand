@@ -44,6 +44,14 @@ public abstract class Command {
     private CommandPermission permission = CommandPermission.EVERYONE;
     private Predicate<CommandSender> executorPermission = i -> true;
 
+    /**
+     * Constructs a new Command instance.
+     *
+     * @param name        The primary name of the command.
+     * @param description A brief description of what the command does.
+     * @param aliases     Optional alternative names for the command.
+     * @throws CommandLoadException if {@link #init()} throws an exception.
+     */
     public Command(@NotNull final String name, @NotNull final String description, @NotNull final String... aliases) {
         this.name = name;
         this.description = Objects.requireNonNull(description, "description cannot be null");
@@ -55,29 +63,56 @@ public abstract class Command {
         }
     }
 
+    /**
+     * Unregisters all commands from the default manager.
+     */
     public static void unregisterAll() {
         CommandManager.getDefault().unregisterAll();
     }
 
+    /**
+     * Retrieves all registered commands from the default manager.
+     *
+     * @return An unmodifiable list of commands.
+     */
     @NotNull
     @UnmodifiableView
     public static List<Command> getCommands() {
         return CommandManager.getDefault().getCommands();
     }
 
+    /**
+     * Retrieves a command by name from the default manager.
+     *
+     * @param name The name or alias of the command.
+     * @return The command instance, or null if not found.
+     */
     @Nullable
     public static Command get(@NotNull final String name) {
         return CommandManager.getDefault().get(name);
     }
 
+    /**
+     * Registers a command to the default manager.
+     *
+     * @param command The command to register.
+     */
     public static void register(@NotNull final Command command) {
         CommandManager.getDefault().register(command);
     }
 
+    /**
+     * Checks if this command is currently registered to a manager.
+     *
+     * @return true if registered, false otherwise.
+     */
     public boolean isRegistered() {
         return this.manager != null;
     }
 
+    /**
+     * Unregisters this command from its manager and clears its executors.
+     */
     public void unregister() {
         final CommandManager current = this.manager;
         this.executors.clear();
@@ -101,38 +136,80 @@ public abstract class Command {
         return keys;
     }
 
+    /**
+     * Gets the primary name of this command.
+     *
+     * @return The command name.
+     */
     @NotNull
     public String getName() {
         return this.name;
     }
 
+    /**
+     * Gets the aliases for this command.
+     *
+     * @return A list of aliases.
+     */
     @NotNull
     public List<String> getAliases() {
         return this.aliases;
     }
 
+    /**
+     * Gets the description of this command.
+     *
+     * @return The description string.
+     */
     @NotNull
     public String getDescription() {
         return this.description;
     }
 
+    /**
+     * Gets the dynamic permission predicate for this command's executors.
+     *
+     * @return The permission predicate.
+     */
     public Predicate<CommandSender> getExecutorPermission() {
         return this.executorPermission;
     }
 
+    /**
+     * Sets a dynamic permission predicate that applies to all executors of this command.
+     *
+     * @param executorPermission The new permission predicate.
+     */
     public void setExecutorPermission(@NotNull final Predicate<CommandSender> executorPermission) {
         this.executorPermission = executorPermission;
     }
 
+    /**
+     * Gets the required permission level for this command.
+     *
+     * @return The command permission.
+     */
     @NotNull
     public CommandPermission getPermission() {
         return this.permission;
     }
 
+    /**
+     * Sets the required permission level for this command.
+     *
+     * @param permission The new permission level.
+     */
     public void setPermission(final CommandPermission permission) {
         this.permission = permission;
     }
 
+    /**
+     * Adds a new execution path to this command.
+     *
+     * @param executor         The logic to run when this signature is matched.
+     * @param commandArguments The sequence of arguments that define this signature.
+     * @return The created {@link Executor} instance for further configuration.
+     */
     @NotNull
     public final Executor addExecutor(@NotNull final CommandExecutor executor, @NotNull final CommandArgument<?>... commandArguments) {
         final Executor executor1 = new Executor(executor, this, commandArguments);
@@ -147,7 +224,7 @@ public abstract class Command {
      * should use {@link #addExecutor(CommandExecutor, CommandArgument[])} to define 
      * the command's behavior and arguments.
      * 
-     * <h3>Example</h3>
+     * <p><b>Example:</b></p>
      * <pre>
      * {@code
      * @Override
@@ -209,49 +286,119 @@ public abstract class Command {
             this.executorPermission = command.getExecutorPermission();
         }
 
+        /**
+         * Sets the required permission level for this specific executor.
+         *
+         * @param permission The new permission level.
+         * @return This executor, for chaining.
+         */
         @NotNull
         public Executor setPermission(@NotNull final CommandPermission permission) {
             this.permission = permission;
             return this;
         }
 
+        /**
+         * Attaches a callback to be run when this executor finishes with a specific result.
+         *
+         * @param result   The result state to track.
+         * @param executor The callback logic.
+         * @return This executor, for chaining.
+         */
         @NotNull
         public Executor addCommandResultExecutor(@NotNull final CommandResult result, @NotNull final CommandResultExecutor executor) {
             this.results.put(result, executor);
             return this;
         }
 
+        /**
+         * Adds an additional dynamic permission check to this executor.
+         *
+         * @param executorPermission The dynamic predicate to add.
+         * @return This executor, for chaining.
+         */
         @NotNull
         public Executor addExecutorPermission(@NotNull final Predicate<CommandSender> executorPermission) {
             this.executorPermission = this.executorPermission.and(executorPermission);
             return this;
         }
 
+        /**
+         * Removes all dynamic permission checks from this executor.
+         *
+         * @return This executor, for chaining.
+         */
         @NotNull
         public Executor removeExecutorPermission() {
             this.executorPermission = i -> true;
             return this;
         }
 
+        /**
+         * Overwrites all dynamic permission checks with a new one.
+         *
+         * @param executorPermission The new dynamic predicate.
+         * @return This executor, for chaining.
+         */
         @NotNull
         public Executor overrideExecutorPermission(@NotNull final Predicate<CommandSender> executorPermission) {
             this.executorPermission = executorPermission;
             return this;
         }
 
+        /**
+         * Gets the parent command this executor belongs to.
+         *
+         * @return The parent command.
+         */
         public Command getCommand() {
             return this.command;
         }
 
+        /**
+         * Gets the execution logic for this signature.
+         *
+         * @return The command executor.
+         */
         @NotNull
         CommandExecutor getExecutor() { return executor; }
+
+        /**
+         * Gets the signature of arguments expected by this executor.
+         *
+         * @return An array of command arguments.
+         */
         @NotNull
         public CommandArgument<?>[] getCommandArguments() { return commandArguments; }
+
+        /**
+         * Gets the permission level required for this executor.
+         *
+         * @return The command permission.
+         */
         @NotNull
         CommandPermission getPermission() { return permission; }
+
+        /**
+         * Gets the dynamic permission predicate for this executor.
+         *
+         * @return The permission predicate.
+         */
         @NotNull
         Predicate<CommandSender> getExecutorPermission() { return executorPermission; }
+
+        /**
+         * Gets the count of nullable (optional) arguments in this signature.
+         *
+         * @return The nullable argument count.
+         */
         int getNullableCommandArguments() { return nullableCommandArguments; }
+
+        /**
+         * Gets all registered result callbacks for this executor.
+         *
+         * @return A map of results to their corresponding executors.
+         */
         @NotNull
         Map<CommandResult, CommandResultExecutor> getResults() { return results; }
     }

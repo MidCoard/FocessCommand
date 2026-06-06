@@ -39,6 +39,14 @@ public class CommandRoute {
     private final List<CommandArgument<?>> currentArguments = Lists.newArrayList();
     private CommandResult state = CommandResult.NONE;
 
+    /**
+     * Constructs a new CommandRoute instance.
+     *
+     * @param manager The manager instance.
+     * @param sender  The sender initiating the command.
+     * @param input   The raw input string.
+     * @param tokens  The tokenized input.
+     */
     public CommandRoute(@NotNull CommandManager manager, @NotNull CommandSender sender, @NotNull String input, @NotNull List<Token> tokens) {
         this.sender = sender;
         this.input = input;
@@ -252,18 +260,60 @@ public class CommandRoute {
         return this.currentArguments.stream().distinct().collect(Collectors.toList());
     }
 
+    /**
+     * Gets the sender associated with this route.
+     *
+     * @return The command sender.
+     */
     @NotNull
     public CommandSender getSender() { return sender; }
+
+    /**
+     * Gets the raw input string that was routed.
+     *
+     * @return The raw input.
+     */
     @NotNull
     public String getInput() { return input; }
+
+    /**
+     * Gets the tokenized version of the input string.
+     *
+     * @return A list of token contents.
+     */
     @NotNull
     public List<String> getTokens() { return tokens.stream().map(Token::content).collect(Collectors.toList()); }
+
+    /**
+     * Gets the root command matched by the routing engine.
+     *
+     * @return The matched command, or null if no command was found.
+     */
     @Nullable
     public Command getCommand() { return command; }
+
+    /**
+     * Gets the specific executor matched by the routing engine.
+     *
+     * @return The matched executor, or null if no signature matched or 
+     *         permissions were insufficient.
+     */
     @Nullable
     public Command.Executor getExecutor() { return matchedExecutor; }
+
+    /**
+     * Gets the parsed argument data for the matched executor.
+     *
+     * @return The data collection, or null if no executor was matched.
+     */
     @Nullable
     public DataCollection getData() { return matchedData; }
+
+    /**
+     * Gets the current routing state.
+     *
+     * @return The command result state.
+     */
     @NotNull
     public CommandResult getState() { return state; }
 }

@@ -14,7 +14,7 @@ import java.util.Objects;
  * A {@code CommandArgument} defines the metadata, validation logic, and completion 
  * behavior for a specific positional token in a command string. 
  * 
- * <h3>Types of Arguments</h3>
+ * <h2>Types of Arguments</h2>
  * <ul>
  *   <li><b>Variable Arguments:</b> Defined by a {@link DataConverter}. They accept any string 
  *       that the converter validates (e.g., an integer or a player name).</li>
@@ -25,7 +25,7 @@ import java.util.Objects;
  *       {@link DataCollection}.</li>
  * </ul>
  * 
- * <h3>Naming and Retrieval</h3>
+ * <h2>Naming and Retrieval</h2>
  * Use {@link #named(String)} to assign a key to the argument. This allows the 
  * {@link CommandExecutor} to retrieve the parsed value by name (e.g., {@code data.get("target")}) 
  * instead of just by index.

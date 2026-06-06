@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
  * is granted access if their permission level is greater than or equal to the required 
  * level (verified via {@link #hasPermission(CommandPermission)}).
  * 
- * <h3>Hierarchy</h3>
+ * <h2>Hierarchy</h2>
  * {@link #OWNER} (100) &gt; {@link #ADMINISTRATOR} (10) &gt; {@link #EVERYONE} (0)
  */
 public enum CommandPermission {

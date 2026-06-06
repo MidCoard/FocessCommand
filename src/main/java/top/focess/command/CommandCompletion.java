@@ -14,6 +14,12 @@ import java.util.Objects;
  */
 public record CommandCompletion(@NotNull String candidate, @Nullable String description) {
 
+    /**
+     * Canonical constructor for {@code CommandCompletion}.
+     * 
+     * @param candidate   The suggestion string.
+     * @param description The optional description.
+     */
     public CommandCompletion {
         Objects.requireNonNull(candidate, "candidate cannot be null");
     }

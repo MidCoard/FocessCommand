@@ -12,7 +12,7 @@ import java.util.concurrent.TimeUnit;
  * the platform's input/output systems (e.g., a Terminal, a Chat Window, or a 
  * Network Socket) and the command engine.
  * 
- * <h3>Capabilities</h3>
+ * <h2>Capabilities</h2>
  * <ul>
  *   <li><b>Permission Gating:</b> Senders carry a {@link CommandPermission} that 
  *       the framework uses to determine command and executor visibility.</li>

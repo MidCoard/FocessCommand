@@ -14,10 +14,18 @@ import java.util.Optional;
  * This complements the compact {@link CommandResult} bitmask by letting callers receive additional
  * feedback without having to catch exceptions themselves.
  *
+ * @param result  The final status of the command execution.
+ * @param message An optional human-readable message, often used for exception details.
  * @see CommandManager#dispatch(CommandSender, String)
  */
 public record ExecutionResult(CommandResult result, @Nullable String message) {
 
+    /**
+     * Constructs a new {@code ExecutionResult}.
+     *
+     * @param result  The command result status.
+     * @param message An optional feedback message.
+     */
     public ExecutionResult(@NotNull final CommandResult result, @Nullable final String message) {
         this.result = Objects.requireNonNull(result, "result");
         this.message = message;
