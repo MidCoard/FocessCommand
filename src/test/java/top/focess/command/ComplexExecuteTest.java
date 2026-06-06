@@ -13,12 +13,12 @@ import static org.junit.jupiter.api.Assertions.*;
 class ComplexExecuteTest {
 
     private CommandManager manager;
-    private TestSender owner;
+    private TestCommandSender owner;
 
     @BeforeEach
     void setUp() {
         manager = new CommandManager();
-        owner = new TestSender(CommandPermission.OWNER);
+        owner = new TestCommandSender(CommandPermission.OWNER);
     }
 
     @Test
@@ -35,7 +35,7 @@ class ComplexExecuteTest {
         });
 
         manager.dispatch(owner, "story \"Once upon\" 'a time'");
-        assertEquals("Once upon: a time", owner.lastOutput());
+        assertEquals("Once upon: a time", owner.getLastOutput());
     }
 
     @Test
@@ -54,13 +54,13 @@ class ComplexExecuteTest {
         visible.set(false);
         ExecutionResult res = manager.dispatch(owner, "secret wrong-args");
         assertEquals(CommandResult.COMMAND_NOT_FOUND, res.getResult()); // Result from route engine when usage gated
-        assertNull(owner.lastOutput()); // Help message NOT printed
+        assertNull(owner.getLastOutput()); // Help message NOT printed
 
         // Case 2: Visible
         visible.set(true);
         res = manager.dispatch(owner, "secret wrong-args");
         assertEquals(CommandResult.ARGS_NOT_EXECUTED, res.getResult());
-        assertEquals("the secret is 42", owner.lastOutput()); // Help message printed
+        assertEquals("the secret is 42", owner.getLastOutput()); // Help message printed
     }
 
     @Test
@@ -75,25 +75,17 @@ class ComplexExecuteTest {
             @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
         });
 
-        TestSender member = new TestSender(CommandPermission.EVERYONE);
+        TestCommandSender member = new TestCommandSender(CommandPermission.EVERYONE);
         
         // Member can only see member executor
         manager.dispatch(member, "multi");
-        assertEquals("member", member.lastOutput());
+        assertEquals("member", member.getLastOutput());
         
         manager.dispatch(member, "multi owner");
         assertEquals(CommandResult.ARGS_NOT_EXECUTED, manager.dispatch(member, "multi owner").getResult());
 
         // Owner can see both (but "multi owner" matches specific executor)
         manager.dispatch(owner, "multi owner");
-        assertEquals("owner", owner.lastOutput());
-    }
-
-    private static final class TestSender extends AbstractCommandSender {
-        private String last;
-        TestSender(CommandPermission p) { super(p); }
-        @Override @NotNull public String input() { return ""; }
-        @Override public void output(@NotNull String message) { this.last = message; }
-        String lastOutput() { return last; }
+        assertEquals("owner", owner.getLastOutput());
     }
 }

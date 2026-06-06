@@ -24,7 +24,7 @@ public abstract class AbstractCommandSender implements CommandSender {
     }
 
     @Override
-    public final void input(@NotNull String input) {
+    public final void receiveInput(@NotNull String input) {
         if (this.inputFuture != null) {
             this.inputFuture.complete(input);
             this.inputFuture = null;
@@ -33,7 +33,7 @@ public abstract class AbstractCommandSender implements CommandSender {
 
     @Override
     @NotNull
-    public final CompletableFuture<String> inputAsync(long timeoutMillis) {
+    public CompletableFuture<String> inputAsync(long timeoutMillis) {
         final CompletableFuture<String> future = new CompletableFuture<>();
         this.inputFuture = future;
         CompletableFuture.delayedExecutor(timeoutMillis, TimeUnit.MILLISECONDS).execute(() -> {

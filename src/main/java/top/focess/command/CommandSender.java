@@ -33,11 +33,15 @@ public interface CommandSender {
 
     /**
      * Read an input string from the sender.
+     * <p>
+     * This method may block until input is provided via {@link #receiveInput(String)}.
      *
      * @return the input string
      */
     @NotNull
-    String input();
+    default String input() {
+        return this.inputAsync().join();
+    }
 
     /**
      * Send an output message to the sender.
@@ -72,7 +76,7 @@ public interface CommandSender {
      *
      * @param input the input string
      */
-    default void input(@NotNull String input) {
+    default void receiveInput(@NotNull String input) {
         throw new UnsupportedOperationException("Async input is not supported by this CommandSender.");
     }
 }

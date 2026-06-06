@@ -12,12 +12,12 @@ import static org.junit.jupiter.api.Assertions.*;
 class CommandManagerTest {
 
     private CommandManager manager;
-    private TestSender sender;
+    private TestCommandSender sender;
 
     @BeforeEach
     void setUp() {
         manager = new CommandManager();
-        sender = new TestSender(CommandPermission.OWNER);
+        sender = new TestCommandSender(CommandPermission.OWNER);
     }
 
     @Test
@@ -40,7 +40,7 @@ class CommandManagerTest {
         });
 
         manager.dispatch(sender, "echo \"hello world\"");
-        assertEquals("hello world", sender.lastOutput());
+        assertEquals("hello world", sender.getLastOutput());
     }
 
     @Test
@@ -55,13 +55,5 @@ class CommandManagerTest {
         TestCommand(String name) { super(name, "desc"); }
         @Override public void init() {}
         @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
-    }
-
-    private static class TestSender extends AbstractCommandSender {
-        private String last;
-        TestSender(CommandPermission p) { super(p); }
-        @Override public @NotNull String input() { return ""; }
-        @Override public void output(@NotNull String message) { this.last = message; }
-        String lastOutput() { return last; }
     }
 }

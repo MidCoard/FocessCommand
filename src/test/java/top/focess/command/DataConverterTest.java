@@ -64,7 +64,6 @@ class DataConverterTest {
         DataConverter<String> converter = DataConverter.ofChoices("apple", "banana");
         CommandSender sender = new CommandSender() {
             @Override @NotNull public CommandPermission getPermission() { return CommandPermission.EVERYONE; }
-            @Override @NotNull public String input() { return ""; }
             @Override public void output(@NotNull String message) {}
         };
         
@@ -83,7 +82,6 @@ class DataConverterTest {
     void booleanConverterSuggestsCorrectly() {
         CommandSender sender = new CommandSender() {
             @Override @NotNull public CommandPermission getPermission() { return CommandPermission.EVERYONE; }
-            @Override @NotNull public String input() { return ""; }
             @Override public void output(@NotNull String message) {}
         };
         List<CommandCompletion> suggestions = DataConverter.BOOLEAN_DATA_CONVERTER.complete(sender, "");
@@ -105,7 +103,6 @@ class DataConverterTest {
         DataConverter<String> converter = DataConverter.ofChoices(choices);
         CommandSender sender = new CommandSender() {
             @Override @NotNull public CommandPermission getPermission() { return CommandPermission.EVERYONE; }
-            @Override @NotNull public String input() { return ""; }
             @Override public void output(@NotNull String message) {}
         };
 
@@ -120,7 +117,6 @@ class DataConverterTest {
         DataConverter<Color> converter = DataConverter.ofEnum(Color.class, color -> "The color " + color.name().toLowerCase());
         CommandSender sender = new CommandSender() {
             @Override @NotNull public CommandPermission getPermission() { return CommandPermission.EVERYONE; }
-            @Override @NotNull public String input() { return ""; }
             @Override public void output(@NotNull String message) {}
         };
 

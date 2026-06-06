@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class CommandTest {
 
-    private final TestSender sender = new TestSender(CommandPermission.OWNER);
+    private final TestCommandSender sender = new TestCommandSender(CommandPermission.OWNER);
 
     @Test
     void testCommand() {
@@ -37,24 +37,17 @@ class CommandTest {
 
         final ExecutionResult result = manager.dispatch(sender, "hello hello");
         assertEquals(CommandResult.ALLOW, result.getResult());
-        assertEquals(Lists.newArrayList("hello"), sender.outputs);
-        sender.outputs.clear();
+        assertEquals(Lists.newArrayList("hello"), sender.getOutputs());
+        sender.clearOutputs();
 
         final ExecutionResult result1 = manager.dispatch(sender, "hello add not-a-number");
         assertEquals(CommandResult.ARGS_NOT_EXECUTED, result1.getResult());
-        assertEquals(Lists.newArrayList("hello <string>\nhello add <number>"), sender.outputs);
-        sender.outputs.clear();
+        assertEquals(Lists.newArrayList("hello <string>\nhello add <number>"), sender.getOutputs());
+        sender.clearOutputs();
 
         final ExecutionResult result2 = manager.dispatch(sender, "hello add 5");
         assertEquals(CommandResult.ALLOW, result2.getResult());
-        assertEquals(Lists.newArrayList("5"), sender.outputs);
-        sender.outputs.clear();
-    }
-
-    private static final class TestSender extends AbstractCommandSender {
-        private final List<String> outputs = Lists.newArrayList();
-        TestSender(CommandPermission p) { super(p); }
-        @Override @NotNull public String input() { return ""; }
-        @Override public void output(@NotNull String message) { this.outputs.add(message); }
+        assertEquals(Lists.newArrayList("5"), sender.getOutputs());
+        sender.clearOutputs();
     }
 }

@@ -18,13 +18,13 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExecutionAndIoTest {
 
-    private TestSender sender;
+    private TestCommandSender sender;
     private CommandManager manager;
 
     @BeforeEach
     void setUp() {
         manager = new CommandManager();
-        sender = new TestSender(CommandPermission.OWNER);
+        sender = new TestCommandSender(CommandPermission.OWNER);
     }
 
     @AfterEach
@@ -57,10 +57,30 @@ class ExecutionAndIoTest {
     }
 
     @Test
+    void inputRespectsPreSetInputViaAsyncMechanism() {
+        sender.setNextInput("preset");
+        // This tests that input() calls inputAsync(), which our TestCommandSender
+        // now overrides to return a completed future.
+        assertEquals("preset", sender.input());
+    }
+
+    @Test
+    void inputBlocksUntilInputArrives() throws Exception {
+        CompletableFuture.runAsync(() -> {
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException e) {}
+            sender.receiveInput("delayed answer");
+        });
+
+        assertEquals("delayed answer", sender.input());
+    }
+
+    @Test
     void inputAsyncCompletesWhenInputArrives() throws Exception {
         final CompletableFuture<String> future = sender.inputAsync();
         // input arrives later from another thread
-        CompletableFuture.runAsync(() -> sender.input("answer"));
+        CompletableFuture.runAsync(() -> sender.receiveInput("answer"));
 
         assertEquals("answer", future.get(5, TimeUnit.SECONDS));
     }
@@ -115,13 +135,5 @@ class ExecutionAndIoTest {
         public @NotNull List<String> usage(final CommandSender sender) {
             return Lists.newArrayList("ok");
         }
-    }
-
-    private static final class TestSender extends AbstractCommandSender {
-        TestSender(final CommandPermission permission) {
-            super(permission);
-        }
-        @Override public @NotNull String input() { return ""; }
-        @Override public void output(@NotNull String message) {}
     }
 }

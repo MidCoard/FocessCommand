@@ -35,7 +35,6 @@ class CommandPermissionTest {
         final Predicate<CommandSender> predicate = s -> state.get();
         final CommandSender sender = new CommandSender() {
             @Override @NotNull public CommandPermission getPermission() { return CommandPermission.OWNER; }
-            @Override @NotNull public String input() { return ""; }
             @Override public void output(@NotNull String message) {}
         };
 

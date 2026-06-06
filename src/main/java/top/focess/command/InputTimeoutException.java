@@ -1,11 +1,9 @@
 package top.focess.command;
 
-import java.util.concurrent.TimeoutException;
-
 /**
  * Thrown to indicate {@link CommandSender} has waited for too long to get input String
  */
-public class InputTimeoutException extends TimeoutException {
+public class InputTimeoutException extends RuntimeException {
     /**
      * Constructs a InputTimeoutException
      */
