@@ -8,7 +8,6 @@ import top.focess.command.data.*;
 import top.focess.command.data.StringBuffer;
 
 import java.util.Map;
-import java.util.Objects;
 
 /**
  * A type-safe, multi-keyed container for parsed command arguments.
@@ -43,8 +42,6 @@ public class DataCollection {
     private final Map<Class<?>, DataBuffer> buffers = Maps.newHashMap();
 
     private final Map<String, Object> namedValues = Maps.newHashMap();
-
-    private int size = 0;
 
     /**
      * Initialize the DataCollection with fixed size.
