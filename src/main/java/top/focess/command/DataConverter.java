@@ -15,9 +15,24 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
- * This class used to convert String data to target T type data.
+ * Handles the conversion of raw String input into typed objects.
+ * <p>
+ * {@code DataConverter} is the heart of the framework's type-safe argument system. It defines 
+ * how a string token (from the command line) is validated, converted, and stored in a 
+ * {@link DataCollection}.
+ * 
+ * <h2>Conversion Lifecycle</h2>
+ * <ol>
+ *   <li>{@link #accept(String)}: Validates if the raw string matches the expected format.</li>
+ *   <li>{@link #convert(String)}: Transforms the validated string into a Java object of type {@code T}.</li>
+ *   <li>{@link #getTargetClass()}: Specifies the storage class used by {@link DataCollection}.</li>
+ * </ol>
+ * 
+ * <h2>Extensibility</h2>
+ * Subclasses can override {@link #complete(CommandSender, String)} to provide custom 
+ * tab-completions specific to the data type.
  *
- * @param <T> target type
+ * @param <T> The target Java type this converter produces.
  */
 public abstract class DataConverter<T> {
 
@@ -351,23 +366,27 @@ public abstract class DataConverter<T> {
     }
 
     /**
-     * Indicate whether this String argument is this target type or not
+     * Determines if the given string argument is valid for this converter.
      *
-     * @param arg the target argument in String
-     * @return true if this String argument can convert to this target type, false otherwise
+     * @param arg The raw string token from the command line.
+     * @return {@code true} if the argument can be converted by {@link #convert(String)}, 
+     *         {@code false} otherwise.
      */
     public abstract boolean accept(String arg);
 
     /**
-     * Convert String argument to target argument
+     * Transforms a raw string into a typed object.
+     * <p>
+     * <b>Note:</b> This method is only called if {@link #accept(String)} returns {@code true}.
      *
-     * Note: this method is called only when {@link #accept(String)} return true
-     *
-     * @param arg the target argument in String
-     * @return the target argument
+     * @param arg The raw string token to convert.
+     * @return The converted object of type {@code T}.
      */
     public abstract T convert(String arg);
 
+    /**
+     * Internal framework method to validate, convert, and store an argument.
+     */
     boolean put(final DataCollection dataCollection, final String arg) {
         if (this.accept(arg)) {
             this.connect(dataCollection, this.convert(arg));
@@ -376,18 +395,31 @@ public abstract class DataConverter<T> {
         return false;
     }
 
+    /**
+     * Internal framework method to write a typed value into the data collection.
+     */
     void connect(@NotNull final DataCollection dataCollection, final T arg) {
         dataCollection.write(this.getTargetClass(), arg);
     }
 
+    /**
+     * Returns the runtime class of the target type {@code T}.
+     * <p>
+     * This is used by {@link DataCollection} for type-safe retrieval.
+     * 
+     * @return The {@link Class} object for {@code T}.
+     */
     protected abstract Class<T> getTargetClass();
 
     /**
-     * Get the auto-complete suggestions for this argument
+     * Generates tab-completion suggestions for this specific data type.
+     * <p>
+     * The default implementation returns an empty list. Override this to provide
+     * meaningful suggestions (e.g., player names, file paths, or enum constants).
      *
-     * @param sender the executor
-     * @param arg    the current argument
-     * @return the auto-complete suggestions
+     * @param sender The entity requesting completions.
+     * @param arg    The partial string currently being typed.
+     * @return A non-null list of completions.
      */
     @NotNull
     public List<CommandCompletion> complete(@NotNull final CommandSender sender, @NotNull final String arg) {

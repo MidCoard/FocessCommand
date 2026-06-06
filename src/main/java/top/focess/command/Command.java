@@ -13,10 +13,22 @@ import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
- * Represent a Command that can be registered and executed.
+ * The base class for all command definitions.
  * <p>
- * Commands are data structures that define name, description, and a set of executors.
- * Permission gating is handled at the {@link Executor} level.
+ * A {@code Command} acts as a container for one or more execution paths (signatures). 
+ * When a user inputs a command string, the framework routes it to the most specific 
+ * {@link Executor} registered within this class.
+ * 
+ * <h2>Lifecycle</h2>
+ * <ol>
+ *   <li><b>Construction:</b> The constructor sets basic metadata and calls {@link #init()}.</li>
+ *   <li><b>Initialization:</b> Inside {@link #init()}, you must call 
+ *       {@link #addExecutor(CommandExecutor, CommandArgument[])} to define what the command does.</li>
+ *   <li><b>Routing:</b> The framework uses {@link #lookupKeys()} (name + aliases) to find 
+ *       this command instance.</li>
+ *   <li><b>Usage:</b> If argument parsing fails, {@link #usage(CommandSender)} is called 
+ *       to provide feedback to the user.</li>
+ * </ol>
  */
 public abstract class Command {
 
@@ -128,8 +140,38 @@ public abstract class Command {
         return executor1;
     }
 
+    /**
+     * Initializes the command by registering its executors.
+     * <p>
+     * This method is called automatically during command construction. Implementations 
+     * should use {@link #addExecutor(CommandExecutor, CommandArgument[])} to define 
+     * the command's behavior and arguments.
+     * 
+     * <h3>Example</h3>
+     * <pre>
+     * {@code
+     * @Override
+     * public void init() {
+     *     this.addExecutor((s, data) -> {
+     *         s.output("Hello " + data.get());
+     *         return CommandResult.ALLOW;
+     *     }, CommandArgument.ofString().named("name"));
+     * }
+     * }
+     * </pre>
+     */
     public abstract void init();
 
+    /**
+     * Provides the usage help lines for this command.
+     * <p>
+     * This method is called when the user provides invalid arguments or explicitly 
+     * requests help. The returned lines will be sent to the {@link CommandSender}.
+     *
+     * @param sender The entity requesting help. Can be used to tailor the help 
+     *               message based on permissions.
+     * @return A non-null list of strings, each representing a line of help text.
+     */
     @NotNull
     public abstract List<String> usage(CommandSender sender);
 

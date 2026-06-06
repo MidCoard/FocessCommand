@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CommandTest {
 
@@ -36,17 +37,17 @@ class CommandTest {
         manager.register(command);
 
         final ExecutionResult result = manager.dispatch(sender, "hello hello");
-        assertEquals(CommandResult.ALLOW, result.getResult());
+        assertEquals(CommandResult.ALLOW, result.result());
         assertEquals(Lists.newArrayList("hello"), sender.getOutputs());
         sender.clearOutputs();
 
         final ExecutionResult result1 = manager.dispatch(sender, "hello add not-a-number");
-        assertEquals(CommandResult.ARGS_NOT_EXECUTED, result1.getResult());
+        assertEquals(CommandResult.ARGS_NOT_EXECUTED, result1.result());
         assertEquals(Lists.newArrayList("hello <string>\nhello add <number>"), sender.getOutputs());
         sender.clearOutputs();
 
         final ExecutionResult result2 = manager.dispatch(sender, "hello add 5");
-        assertEquals(CommandResult.ALLOW, result2.getResult());
+        assertEquals(CommandResult.ALLOW, result2.result());
         assertEquals(Lists.newArrayList("5"), sender.getOutputs());
         sender.clearOutputs();
     }

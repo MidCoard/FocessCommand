@@ -38,4 +38,14 @@ class CommandResultTest {
     void noneIsEmpty() {
         assertFalse(CommandResult.NONE.contains(CommandResult.ALLOW));
     }
+
+    @Test
+    void explicitStatesRequireUserHandling() {
+        assertTrue(CommandResult.COMMAND_NOT_FOUND.isExplicit());
+        assertTrue(CommandResult.REFUSE_EXCEPTION.isExplicit());
+        assertFalse(CommandResult.ALLOW.isExplicit());
+        assertFalse(CommandResult.REFUSE.isExplicit());
+        assertFalse(CommandResult.ARGS.isExplicit());
+        assertFalse(CommandResult.ARGS_NOT_EXECUTED.isExplicit());
+    }
 }

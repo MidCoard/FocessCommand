@@ -9,8 +9,28 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Represents a command argument.
- * @param <V> the type of the argument.
+ * Represents a single argument definition within a command signature.
+ * <p>
+ * A {@code CommandArgument} defines the metadata, validation logic, and completion 
+ * behavior for a specific positional token in a command string. 
+ * 
+ * <h3>Types of Arguments</h3>
+ * <ul>
+ *   <li><b>Variable Arguments:</b> Defined by a {@link DataConverter}. They accept any string 
+ *       that the converter validates (e.g., an integer or a player name).</li>
+ *   <li><b>Fixed Literals:</b> Created via {@link #of(String)}. They only accept a 
+ *       specific, case-insensitive string value (e.g., the word "create" in "/party create").</li>
+ *   <li><b>Optional Arguments:</b> Created via {@link #ofNullable(DataConverter)}. These can 
+ *       be omitted by the user. If omitted, they are stored as {@code null} in 
+ *       {@link DataCollection}.</li>
+ * </ul>
+ * 
+ * <h3>Naming and Retrieval</h3>
+ * Use {@link #named(String)} to assign a key to the argument. This allows the 
+ * {@link CommandExecutor} to retrieve the parsed value by name (e.g., {@code data.get("target")}) 
+ * instead of just by index.
+ *
+ * @param <V> The Java type that this argument resolves to after parsing.
  */
 public class CommandArgument<V> {
 

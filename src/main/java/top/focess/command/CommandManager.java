@@ -12,10 +12,26 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * An instance-based registry of {@link Command}s.
+ * The central management and entry point for the Focess Command framework.
  * <p>
- * This class handles the registration of commands and provides the entry point
- * for routing, dispatching, and completion.
+ * This class handles command registration, unregistration, auto-completion, and dispatching.
+ * It coordinates the lifecycle of a command execution from raw string input to the invocation
+ * of specific {@link CommandExecutor}s.
+ * 
+ * <h2>Framework Overview</h2>
+ * The Focess Command framework operates on a **Route-Match-Execute** model:
+ * <ol>
+ *   <li><b>Routing:</b> The input is tokenized and traversed to find a matching {@link Command}.</li>
+ *   <li><b>Matching:</b> The framework performs a Depth-First Search (DFS) across all registered
+ *       executors for that command to find the best match based on argument types and constraints.</li>
+ *   <li><b>Execution:</b> Once matched, the corresponding executor is invoked with a 
+ *       {@link DataCollection} containing the parsed arguments.</li>
+ * </ol>
+ * 
+ * <h2>State Handling</h2>
+ * Every dispatch returns an {@link ExecutionResult} containing a {@link CommandResult}. 
+ * Some states are handled internally (like printing usage on mismatch), while others 
+ * ({@link CommandResult#isExplicit()}) must be handled by the caller.
  */
 public class CommandManager {
 

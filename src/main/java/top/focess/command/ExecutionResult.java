@@ -16,13 +16,9 @@ import java.util.Optional;
  *
  * @see CommandManager#dispatch(CommandSender, String)
  */
-public final class ExecutionResult {
+public record ExecutionResult(CommandResult result, @Nullable String message) {
 
-    private final CommandResult result;
-    @Nullable
-    private final String message;
-
-    private ExecutionResult(@NotNull final CommandResult result, @Nullable final String message) {
+    public ExecutionResult(@NotNull final CommandResult result, @Nullable final String message) {
         this.result = Objects.requireNonNull(result, "result");
         this.message = message;
     }
@@ -55,8 +51,9 @@ public final class ExecutionResult {
      *
      * @return the command result status
      */
+    @Override
     @NotNull
-    public CommandResult getResult() {
+    public CommandResult result() {
         return this.result;
     }
 
@@ -78,25 +75,5 @@ public final class ExecutionResult {
      */
     public boolean isExecuted() {
         return this.result.isExecuted();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-        if (this == o)
-            return true;
-        if (!(o instanceof ExecutionResult))
-            return false;
-        final ExecutionResult that = (ExecutionResult) o;
-        return this.result == that.result && Objects.equals(this.message, that.message);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(this.result, this.message);
-    }
-
-    @Override
-    public String toString() {
-        return "ExecutionResult{result=" + this.result + ", message=" + this.message + '}';
     }
 }

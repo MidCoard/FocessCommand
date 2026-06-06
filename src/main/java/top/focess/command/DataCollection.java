@@ -11,7 +11,22 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
- * Store and parser arguments for better CommandExecutor usage.
+ * A type-safe, multi-keyed container for parsed command arguments.
+ * <p>
+ * {@code DataCollection} is provided to {@link CommandExecutor}s and contains all arguments 
+ * matched for the current execution path. It allows for flexible data retrieval using 
+ * three different strategies:
+ * 
+ * <h3>Retrieval Strategies</h3>
+ * <ul>
+ *   <li><b>Positional/Typed:</b> Retrieve the next available argument of a specific type 
+ *       (e.g., {@link #getInt()}, {@link #get(Class)}). This is stateful; each call 
+ *       advances an internal pointer for that specific type.</li>
+ *   <li><b>Indexed:</b> Retrieve an argument of a specific type at a specific position 
+ *       within its type-buffer (e.g., {@link #get(Class, int)}).</li>
+ *   <li><b>Named:</b> Retrieve an argument by the name assigned via 
+ *       {@link CommandArgument#named(String)} (e.g., {@link #get(String)}).</li>
+ * </ul>
  */
 public class DataCollection {
 

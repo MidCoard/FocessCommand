@@ -6,37 +6,56 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 /**
- * Represent an executor that has certain permissions and can interact with the command system.
+ * Represents an entity capable of sending and receiving command interaction data.
  * <p>
- * This interface unifies the previous CommandSender and IOHandler, providing both
- * permission checks and I/O capabilities (input/output).
+ * In the Focess Command framework, a {@link CommandSender} is the bridge between 
+ * the platform's input/output systems (e.g., a Terminal, a Chat Window, or a 
+ * Network Socket) and the command engine.
+ * 
+ * <h3>Capabilities</h3>
+ * <ul>
+ *   <li><b>Permission Gating:</b> Senders carry a {@link CommandPermission} that 
+ *       the framework uses to determine command and executor visibility.</li>
+ *   <li><b>Push Output:</b> Senders receive status and result messages via 
+ *       {@link #output(String)}.</li>
+ *   <li><b>Interactive Input:</b> Senders support both synchronous ({@link #input()})
+ *       and asynchronous ({@link #inputAsync()}) input retrieval, allowing commands
+ *        to wait for follow-up data from the user.</li>
+ * </ul>
  */
 public interface CommandSender {
 
     /**
-     * Get the permission level of this sender.
+     * Retrieves the permission level of this sender.
+     * <p>
+     * This is used by the framework to filter visible commands and executors.
      *
-     * @return the command permission
+     * @return A non-null {@link CommandPermission} instance.
      */
     @NotNull
     CommandPermission getPermission();
 
     /**
-     * Indicate this CommandSender owns the permission
+     * Checks if this sender has the required permission.
      *
-     * @param permission the compared permission
-     * @return true if the permission of this CommandSender is higher or equivalent to the compared permission, false otherwise
+     * @param permission The permission level to check against.
+     * @return {@code true} if the sender's permission is greater than or equal 
+     *         to the required level.
      */
     default boolean hasPermission(@NotNull CommandPermission permission) {
         return this.getPermission().hasPermission(permission);
     }
 
     /**
-     * Read an input string from the sender.
+     * Reads a line of input from the sender, blocking until data is available.
      * <p>
-     * This method may block until input is provided via {@link #receiveInput(String)}.
+     * This method is a synchronous convenience wrapper around {@link #inputAsync()}. 
+     * It will block the current thread until {@link #receiveInput(String)} is called 
+     * or a timeout occurs.
      *
-     * @return the input string
+     * @return The raw input string.
+     * @throws RuntimeException wrapping an {@link InputTimeoutException} if the 
+     *                          wait exceeds the default timeout.
      */
     @NotNull
     default String input() {
@@ -44,16 +63,16 @@ public interface CommandSender {
     }
 
     /**
-     * Send an output message to the sender.
+     * Sends a message to the sender's communication channel (e.g., terminal, chat).
      *
-     * @param message the message to send
+     * @param message The string message to display.
      */
     void output(@NotNull String message);
 
     /**
-     * Wait for input asynchronously with a default timeout of 10 minutes.
+     * Requests input asynchronously with a default timeout (10 minutes).
      *
-     * @return a future that completes with the input
+     * @return A {@link CompletableFuture} that completes with the user's input string.
      */
     @NotNull
     default CompletableFuture<String> inputAsync() {
@@ -61,10 +80,13 @@ public interface CommandSender {
     }
 
     /**
-     * Wait for input asynchronously with a specific timeout.
+     * Requests input asynchronously with a specific timeout.
      *
-     * @param timeoutMillis the timeout in milliseconds
-     * @return a future that completes with the input or fails with InputTimeoutException
+     * @param timeoutMillis The maximum time to wait for input in milliseconds.
+     * @return A {@link CompletableFuture} that completes with the input string, 
+     *         or fails with {@link InputTimeoutException} on timeout.
+     * @throws UnsupportedOperationException If the implementation does not support 
+     *                                       async input.
      */
     @NotNull
     default CompletableFuture<String> inputAsync(long timeoutMillis) {
@@ -72,9 +94,14 @@ public interface CommandSender {
     }
 
     /**
-     * Provide input to this sender, potentially completing an async wait.
+     * Notifies the sender that an input event has occurred.
+     * <p>
+     * This method is typically called by the platform's input listener (e.g., a 
+     * Console Reader or Packet Handler) to complete a pending {@link #inputAsync()} request.
      *
-     * @param input the input string
+     * @param input The raw input string provided by the user.
+     * @throws UnsupportedOperationException If the implementation does not support 
+     *                                       async input.
      */
     default void receiveInput(@NotNull String input) {
         throw new UnsupportedOperationException("Async input is not supported by this CommandSender.");

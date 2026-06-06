@@ -23,7 +23,7 @@ class CommandManagerTest {
     @Test
     void dispatchReturnsNotFoundForMissingCommand() {
         final ExecutionResult result = manager.dispatch(sender, "unknown arg");
-        assertEquals(CommandResult.COMMAND_NOT_FOUND, result.getResult());
+        assertEquals(CommandResult.COMMAND_NOT_FOUND, result.result());
     }
 
     @Test

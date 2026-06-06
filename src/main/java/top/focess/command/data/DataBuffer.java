@@ -3,36 +3,47 @@ package top.focess.command.data;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * A buffer which stores data
+ * A type-specific storage buffer used by {@link top.focess.command.DataCollection}.
+ * <p>
+ * {@code DataBuffer} follows a strict **Write-then-Read** lifecycle, similar to Java's 
+ * {@link java.nio.Buffer}. During command parsing, the framework {@link #put(Object)}s 
+ * values into the buffer. Once parsing is complete, the framework calls {@link #flip()}, 
+ * making the values available for retrieval by the {@link top.focess.command.CommandExecutor}.
  *
- * @param <T> the elements' type in the buffer
+ * @param <T> The type of data stored in this buffer.
  */
 public abstract class DataBuffer<T> {
 
     /**
-     * Flip all the buffers. Make them all readable.
+     * Finalizes the writing phase and prepares the buffer for reading.
+     * <p>
+     * After this call, internal pointers are typically reset so that {@link #get()} 
+     * starts from the first element.
      */
     public abstract void flip();
 
     /**
-     * Put the element into the buffer
+     * Appends a value to the buffer.
      *
-     * @param t the element need to be put in the buffer
+     * @param t The value to store.
      */
     public abstract void put(T t);
 
     /**
-     * Get element in the buffer in order
+     * Retrieves the next available element from the buffer and advances the 
+     * internal read pointer.
      *
-     * @return element in the buffer in order
+     * @return The next element, or {@code null} if the end of the buffer is reached.
      */
     public abstract T get();
 
     /**
-     * Get element in the buffer by index
+     * Retrieves an element at a specific index without advancing the internal 
+     * read pointer.
      *
-     * @param index the element index
-     * @return element in the index of the buffer
+     * @param index The 0-based index of the element to retrieve.
+     * @return The element at the specified index.
+     * @throws IndexOutOfBoundsException if the index is invalid.
      */
     public abstract T get(int index);
 }

@@ -53,13 +53,13 @@ class ComplexExecuteTest {
         // Case 1: Hidden
         visible.set(false);
         ExecutionResult res = manager.dispatch(owner, "secret wrong-args");
-        assertEquals(CommandResult.COMMAND_NOT_FOUND, res.getResult()); // Result from route engine when usage gated
+        assertEquals(CommandResult.COMMAND_NOT_FOUND, res.result()); // Result from route engine when usage gated
         assertNull(owner.getLastOutput()); // Help message NOT printed
 
         // Case 2: Visible
         visible.set(true);
         res = manager.dispatch(owner, "secret wrong-args");
-        assertEquals(CommandResult.ARGS_NOT_EXECUTED, res.getResult());
+        assertEquals(CommandResult.ARGS_NOT_EXECUTED, res.result());
         assertEquals("the secret is 42", owner.getLastOutput()); // Help message printed
     }
 
@@ -82,7 +82,7 @@ class ComplexExecuteTest {
         assertEquals("member", member.getLastOutput());
         
         manager.dispatch(member, "multi owner");
-        assertEquals(CommandResult.ARGS_NOT_EXECUTED, manager.dispatch(member, "multi owner").getResult());
+        assertEquals(CommandResult.ARGS_NOT_EXECUTED, manager.dispatch(member, "multi owner").result());
 
         // Owner can see both (but "multi owner" matches specific executor)
         manager.dispatch(owner, "multi owner");

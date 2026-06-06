@@ -39,7 +39,7 @@ class ExecutionAndIoTest {
 
         final ExecutionResult result = manager.dispatch(sender, "boom boom");
 
-        assertEquals(CommandResult.REFUSE_EXCEPTION, result.getResult());
+        assertEquals(CommandResult.REFUSE_EXCEPTION, result.result());
         assertEquals("kaboom", result.getMessage().orElse(null));
         assertFalse(result.isExecuted());
     }
@@ -51,9 +51,22 @@ class ExecutionAndIoTest {
 
         final ExecutionResult result = manager.dispatch(sender, "ok ok");
 
-        assertEquals(CommandResult.ALLOW, result.getResult());
+        assertEquals(CommandResult.ALLOW, result.result());
         assertTrue(result.isExecuted());
         assertFalse(result.getMessage().isPresent());
+    }
+
+    @Test
+    void multipleInputAsyncRequestsAreQueuedInFifoOrder() throws Exception {
+        final CompletableFuture<String> f1 = sender.inputAsync();
+        final CompletableFuture<String> f2 = sender.inputAsync();
+        
+        sender.receiveInput("first");
+        assertEquals("first", f1.get(1, TimeUnit.SECONDS));
+        assertFalse(f2.isDone());
+        
+        sender.receiveInput("second");
+        assertEquals("second", f2.get(1, TimeUnit.SECONDS));
     }
 
     @Test

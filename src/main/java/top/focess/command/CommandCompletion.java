@@ -6,10 +6,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Objects;
 
 /**
- * Represents an auto-complete suggestion with an optional description.
+ * A data carrier for a single tab-completion suggestion.
  *
- * @param candidate   the candidate string
- * @param description the description of the candidate
+ * @param candidate   The string to be inserted into the command line if selected.
+ * @param description An optional human-readable description of the suggestion 
+ *                    (e.g., "The target player's name").
  */
 public record CommandCompletion(@NotNull String candidate, @Nullable String description) {
 

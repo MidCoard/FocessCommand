@@ -10,10 +10,21 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * The active engine for resolving and executing a command path.
+ * The internal engine responsible for matching a raw command string to a specific executor.
  * <p>
- * CommandRoute unifies the matching logic for both dispatching and completion.
- * It performs a single traversal to identify the best matching executor and all possible suggestions.
+ * {@code CommandRoute} unifies the logic for command dispatching and tab-completion. It 
+ * performs a single, Depth-First Search (DFS) traversal of the command tree to resolve 
+ * the following:
+ * <ul>
+ *   <li><b>Command Matching:</b> Identifying the root {@link Command} and the best 
+ *       fitting {@link Command.Executor} signature.</li>
+ *   <li><b>Argument Parsing:</b> Converting raw string tokens into typed values stored in 
+ *       a {@link DataCollection}.</li>
+ *   <li><b>Completion Discovery:</b> Finding all valid suggestions for the current 
+ *       cursor position.</li>
+ *   <li><b>Hint Discovery:</b> Identifying the expected {@link CommandArgument} types 
+ *       at the current position.</li>
+ * </ul>
  */
 public class CommandRoute {
 
@@ -161,6 +172,20 @@ public class CommandRoute {
         return false;
     }
 
+    /**
+     * Executes the resolved command path.
+     * <p>
+     * This is the final step in the command lifecycle. It will:
+     * <ol>
+     *   <li>Check if a command and executor were successfully matched.</li>
+     *   <li>Handle routing failures (e.g., printing usage on mismatch).</li>
+     *   <li>Invoke the {@link CommandExecutor#execute(CommandSender, DataCollection)} logic.</li>
+     *   <li>Trigger any registered {@link CommandResultExecutor} callbacks.</li>
+     *   <li>Catch and wrap any unexpected exceptions into a {@link CommandResult#REFUSE_EXCEPTION}.</li>
+     * </ol>
+     *
+     * @return An {@link ExecutionResult} containing the final status and optional error message.
+     */
     @NotNull
     public ExecutionResult execute() {
         if (this.state == CommandResult.COMMAND_NOT_FOUND) {
@@ -204,11 +229,24 @@ public class CommandRoute {
         throw new IllegalStateException("Unreachable state: " + this.state);
     }
 
+    /**
+     * Gets all valid tab-completion suggestions for the current cursor position.
+     *
+     * @return A non-null, distinct list of {@link CommandCompletion}s.
+     */
     @NotNull
     public List<CommandCompletion> getCompletions() {
         return this.completions.stream().distinct().collect(Collectors.toList());
     }
 
+    /**
+     * Gets the expected {@link CommandArgument} objects at the current cursor position.
+     * <p>
+     * This is primarily used for displaying UI hints or placeholders (e.g., 
+     * "&lt;name&gt; &mdash; The user to invite").
+     *
+     * @return A non-null, distinct list of possible arguments.
+     */
     @NotNull
     public List<CommandArgument<?>> getCurrentArguments() {
         return this.currentArguments.stream().distinct().collect(Collectors.toList());
