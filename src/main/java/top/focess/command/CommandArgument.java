@@ -62,7 +62,7 @@ public class CommandArgument<V> {
         if (this.completer != null)
             return this.completer.complete(sender, command, args);
         final String arg = args[args.length - 1];
-        if (this.isDefault()) {
+        if (this.isFixed()) {
             final String valueString = String.valueOf(this.value);
             if (valueString.toLowerCase().startsWith(arg.toLowerCase()))
                 return Collections.singletonList(CommandCompletion.of(valueString, this.description));
@@ -167,7 +167,12 @@ public class CommandArgument<V> {
         return new CommandArgument<>(dataConverter, true);
     }
 
-    boolean isNullable() {
+    /**
+     * Check if this argument is nullable (optional).
+     *
+     * @return true if nullable, false otherwise
+     */
+    public boolean isNullable() {
         return this.isNullable;
     }
 
@@ -197,12 +202,32 @@ public class CommandArgument<V> {
         return this;
     }
 
+    /**
+     * Get the name of this argument.
+     *
+     * @return the name, or null if not set
+     */
     @Nullable
-    String getName() {
+    public String getName() {
         return this.name;
     }
 
-    boolean isDefault() {
+    /**
+     * Get the description of this argument.
+     *
+     * @return the description, or null if not set
+     */
+    @Nullable
+    public String getDescription() {
+        return this.description;
+    }
+
+    /**
+     * Check if this is a fixed-literal argument (created from a known value).
+     *
+     * @return true if fixed, false otherwise
+     */
+    public boolean isFixed() {
         return this.value != null;
     }
 
@@ -216,7 +241,7 @@ public class CommandArgument<V> {
     }
 
     boolean accept(final String arg) {
-        if (this.isDefault())
+        if (this.isFixed())
             return this.getDataConverter().accept(arg) && Objects.equals(this.getValue(), this.getDataConverter().convert(arg));
         else return this.getDataConverter().accept(arg);
     }
@@ -228,7 +253,7 @@ public class CommandArgument<V> {
      * @throws IllegalArgumentException if the value is not accepted by the DataConverter
      */
     void put(final DataCollection dataCollection, final String arg) {
-        if (!this.isDefault())
+        if (!this.isFixed())
             if (!this.getDataConverter().put(dataCollection, arg))
                 throw new IllegalArgumentException("The argument " + arg + " is not valid for this argument");
         if (this.name != null && this.getDataConverter().accept(arg))

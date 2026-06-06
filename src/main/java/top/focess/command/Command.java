@@ -204,7 +204,7 @@ public abstract class Command {
         @NotNull
         CommandExecutor getExecutor() { return executor; }
         @NotNull
-        CommandArgument<?>[] getCommandArguments() { return commandArguments; }
+        public CommandArgument<?>[] getCommandArguments() { return commandArguments; }
         @NotNull
         CommandPermission getPermission() { return permission; }
         @NotNull
