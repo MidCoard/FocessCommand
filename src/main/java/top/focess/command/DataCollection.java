@@ -235,19 +235,6 @@ public class DataCollection {
     }
 
     /**
-     * Get the number of arguments in this collection.
-     *
-     * @return the number of arguments
-     */
-    public int size() {
-        return this.size;
-    }
-
-    void setSize(int size) {
-        this.size = size;
-    }
-
-    /**
      * Get a parsed argument by the name assigned via {@link CommandArgument#named(String)}.
      *
      * @param name the name of the argument

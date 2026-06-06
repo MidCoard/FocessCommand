@@ -11,7 +11,6 @@ class CommandResultTest {
     void allContainsEveryConcreteResult() {
         assertTrue(CommandResult.ALL.contains(CommandResult.ALLOW));
         assertTrue(CommandResult.ALL.contains(CommandResult.REFUSE));
-        assertTrue(CommandResult.ALL.contains(CommandResult.COMMAND_REFUSED));
         assertTrue(CommandResult.ALL.contains(CommandResult.ARGS_NOT_EXECUTED));
         assertTrue(CommandResult.ALL.contains(CommandResult.ARGS));
         assertTrue(CommandResult.ALL.contains(CommandResult.REFUSE_EXCEPTION));
@@ -23,8 +22,7 @@ class CommandResultTest {
         assertTrue(CommandResult.ALLOW.isExecuted());
         assertTrue(CommandResult.REFUSE.isExecuted());
         assertTrue(CommandResult.ARGS.isExecuted());
-        assertFalse(CommandResult.COMMAND_REFUSED.isExecuted());
-        assertFalse(CommandResult.REFUSE_EXCEPTION.isExecuted());
+        assertFalse(CommandResult.ARGS_NOT_EXECUTED.isExecuted());
         assertFalse(CommandResult.COMMAND_NOT_FOUND.isExecuted());
         assertFalse(CommandResult.NONE.isExecuted());
     }

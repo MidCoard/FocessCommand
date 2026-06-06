@@ -87,19 +87,10 @@ public class CommandManager {
      */
     @NotNull
     public CommandRoute route(@NotNull CommandSender sender, @NotNull String input) {
-        return new CommandRoute(sender, input, tokenize(input)).resolve(this);
+        return new CommandRoute(this, sender, input, tokenize(input));
     }
 
-    public static class Token {
-        public final String content;
-        public final boolean isQuoted;
-        public final boolean isUnclosed;
-
-        Token(String content, boolean isQuoted, boolean isUnclosed) {
-            this.content = content;
-            this.isQuoted = isQuoted;
-            this.isUnclosed = isUnclosed;
-        }
+    record Token(String content, boolean isQuoted, boolean isUnclosed) {
     }
 
     @NotNull

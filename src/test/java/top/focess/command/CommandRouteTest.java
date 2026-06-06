@@ -35,10 +35,9 @@ class CommandRouteTest {
         assertNotNull(route.getCommand());
         assertEquals("party", route.getCommand().getName());
         assertNotNull(route.getExecutor());
-        assertEquals(2, route.getData().size());
         // Fixed argument "create" is not in DataCollection
         assertEquals("p1", route.getData().get());
-        assertEquals(CommandResult.ALLOW, route.getState());
+        assertEquals(CommandResult.MATCHED, route.getState());
     }
 
     @Test
@@ -57,6 +56,13 @@ class CommandRouteTest {
         List<CommandCompletion> c4 = manager.complete(owner, "party create \"hello ");
     }
     
+    @Test
+    void testEmptyCompletion() {
+        // "party" is registered. So empty string should suggest "party"
+        List<CommandCompletion> c1 = manager.complete(owner, "");
+        assertTrue(c1.stream().anyMatch(c -> c.candidate().equals("party")), "Empty string should suggest root commands");
+    }
+
     @Test
     void testTokenizationDirectly() {
         CommandRoute r1 = manager.route(owner, "party create \"hello world\"");

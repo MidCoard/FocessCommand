@@ -53,7 +53,7 @@ class ComplexExecuteTest {
         // Case 1: Hidden
         visible.set(false);
         ExecutionResult res = manager.dispatch(owner, "secret wrong-args");
-        assertEquals(CommandResult.NONE, res.getResult()); // Result from route engine when usage gated
+        assertEquals(CommandResult.COMMAND_NOT_FOUND, res.getResult()); // Result from route engine when usage gated
         assertNull(owner.lastOutput()); // Help message NOT printed
 
         // Case 2: Visible

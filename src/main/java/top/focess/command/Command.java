@@ -29,6 +29,8 @@ public abstract class Command {
     
     @Nullable
     private CommandManager manager;
+    private CommandPermission permission = CommandPermission.EVERYONE;
+    private Predicate<CommandSender> executorPermission = i -> true;
 
     public Command(@NotNull final String name, @NotNull final String description, @NotNull final String... aliases) {
         this.name = name;
@@ -102,6 +104,23 @@ public abstract class Command {
         return this.description;
     }
 
+    public Predicate<CommandSender> getExecutorPermission() {
+        return this.executorPermission;
+    }
+
+    public void setExecutorPermission(@NotNull final Predicate<CommandSender> executorPermission) {
+        this.executorPermission = executorPermission;
+    }
+
+    @NotNull
+    public CommandPermission getPermission() {
+        return this.permission;
+    }
+
+    public void setPermission(final CommandPermission permission) {
+        this.permission = permission;
+    }
+
     @NotNull
     public final Executor addExecutor(@NotNull final CommandExecutor executor, @NotNull final CommandArgument<?>... commandArguments) {
         final Executor executor1 = new Executor(executor, this, commandArguments);
@@ -136,14 +155,16 @@ public abstract class Command {
         private final CommandArgument<?>[] commandArguments;
         private final Command command;
         private final int nullableCommandArguments;
-        private CommandPermission permission = CommandPermission.EVERYONE;
-        private Predicate<CommandSender> executorPermission = i -> true;
+        private CommandPermission permission;
+        private Predicate<CommandSender> executorPermission;
 
         private Executor(final CommandExecutor executor, final Command command, final CommandArgument<?>[] commandArguments) {
             this.executor = executor;
             this.command = command;
             this.commandArguments = commandArguments;
             this.nullableCommandArguments = (int) Arrays.stream(commandArguments).filter(CommandArgument::isNullable).count();
+            this.permission = command.getPermission();
+            this.executorPermission = command.getExecutorPermission();
         }
 
         @NotNull
