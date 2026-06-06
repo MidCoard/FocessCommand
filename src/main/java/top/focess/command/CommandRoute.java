@@ -25,6 +25,7 @@ public class CommandRoute {
     private Command.Executor matchedExecutor;
     private DataCollection matchedData;
     private final List<CommandCompletion> completions = Lists.newArrayList();
+    private final List<CommandArgument<?>> currentArguments = Lists.newArrayList();
     private CommandResult state = CommandResult.NONE;
 
     public CommandRoute(@NotNull CommandManager manager, @NotNull CommandSender sender, @NotNull String input, @NotNull List<Token> tokens) {
@@ -93,6 +94,7 @@ public class CommandRoute {
             if (lastToken.isQuoted() && !lastToken.isUnclosed()) {
                 if (!input.endsWith(" ") && !input.endsWith("\t")) {
                     this.completions.clear();
+                    this.currentArguments.clear();
                 }
             }
         }
@@ -107,8 +109,10 @@ public class CommandRoute {
     private void dfsComplete(Command.Executor executor, String[] args, int indexOfArgs, int index, int nullableLeft) {
         CommandArgument<?>[] cmdArgs = executor.getCommandArguments();
         if (indexOfArgs == args.length - 1) {
-            if (index < cmdArgs.length)
+            if (index < cmdArgs.length) {
                 this.completions.addAll(cmdArgs[index].complete(sender, this.command, args));
+                this.currentArguments.add(cmdArgs[index]);
+            }
             if (index < cmdArgs.length && cmdArgs[index].isNullable() && nullableLeft > 0 && index + 1 < cmdArgs.length)
                 this.dfsComplete(executor, args, indexOfArgs, index + 1, nullableLeft - 1);
             return;
@@ -203,6 +207,11 @@ public class CommandRoute {
     @NotNull
     public List<CommandCompletion> getCompletions() {
         return this.completions.stream().distinct().collect(Collectors.toList());
+    }
+
+    @NotNull
+    public List<CommandArgument<?>> getCurrentArguments() {
+        return this.currentArguments.stream().distinct().collect(Collectors.toList());
     }
 
     @NotNull

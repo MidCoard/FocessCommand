@@ -63,6 +63,62 @@ class CommandRouteTest {
     }
 
     @Test
+    void testCurrentArguments() {
+        // "party create " -> should suggest name argument
+        CommandRoute route = manager.route(sender, "party create ");
+        List<CommandArgument<?>> current = route.getCurrentArguments();
+        assertEquals(1, current.size());
+        assertEquals("name", current.get(0).getName());
+        assertFalse(current.get(0).isNullable());
+    }
+
+    @Test
+    void testCurrentArgumentsWithNullable() {
+        manager.register(new Command("opt", "Optional test") {
+            @Override
+            public void init() {
+                // opt <req> [optional]
+                addExecutor((s, d) -> CommandResult.ALLOW, CommandArgument.ofString().named("req"), CommandArgument.ofNullable(DataConverter.DEFAULT_DATA_CONVERTER).named("optional"));
+            }
+            @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
+        });
+
+        // "opt val " -> we've filled req, we are at the optional argument
+        CommandRoute route = manager.route(sender, "opt val ");
+        List<CommandArgument<?>> current = route.getCurrentArguments();
+        assertEquals(1, current.size());
+        assertEquals("optional", current.get(0).getName());
+        assertTrue(current.get(0).isNullable());
+    }
+
+    @Test
+    void testCurrentArgumentsWithMultipleExecutors() {
+        final CommandArgument<String> a = CommandArgument.of("a");
+        final CommandArgument<String> c = CommandArgument.of("c");
+        manager.register(new Command("multi", "Multiple test") {
+            @Override
+            public void init() {
+                // multi a [b] c
+                addExecutor((s, d) -> CommandResult.ALLOW, a, CommandArgument.ofNullable(DataConverter.DEFAULT_DATA_CONVERTER).named("b"), c);
+                // multi a c
+                addExecutor((s, d) -> CommandResult.ALLOW, a, c);
+            }
+            @Override public @NotNull List<String> usage(CommandSender sender) { return Lists.newArrayList(); }
+        });
+
+        // "multi a " -> position 1 could be [b] or c
+        CommandRoute route = manager.route(sender, "multi a ");
+        List<CommandArgument<?>> current = route.getCurrentArguments();
+        // Executor 1 contributes [b] and c
+        // Executor 2 contributes c
+        // Since we used the same 'c' object, distinct() should collapse them to 2
+        assertEquals(2, current.size());
+        
+        assertTrue(current.stream().anyMatch(arg -> "b".equals(arg.getName())));
+        assertTrue(current.stream().anyMatch(arg -> arg == c));
+    }
+
+    @Test
     void testTokenizationDirectly() {
         CommandRoute r1 = manager.route(sender, "party create \"hello world\"");
         assertEquals(Lists.newArrayList("party", "create", "hello world"), r1.getTokens());
