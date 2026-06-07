@@ -120,6 +120,16 @@ public abstract class Command {
             current.unregister(this);
     }
 
+    /**
+     * Gets the CommandManager this command is registered to.
+     *
+     * @return The command manager, or null if not registered.
+     */
+    @Nullable
+    public CommandManager getManager() {
+        return this.manager;
+    }
+
     void setManager(@NotNull final CommandManager manager) {
         this.manager = manager;
     }

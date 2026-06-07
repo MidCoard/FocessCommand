@@ -100,10 +100,12 @@ public interface CommandSender {
      * Console Reader or Packet Handler) to complete a pending {@link #inputAsync()} request.
      *
      * @param input The raw input string provided by the user.
+     * @return {@code true} if the input was accepted by a pending request, 
+     *         {@code false} otherwise.
      * @throws UnsupportedOperationException If the implementation does not support 
      *                                       async input.
      */
-    default void receiveInput(@NotNull String input) {
+    default boolean receiveInput(@NotNull String input) {
         throw new UnsupportedOperationException("Async input is not supported by this CommandSender.");
     }
 }

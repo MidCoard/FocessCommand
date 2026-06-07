@@ -57,6 +57,19 @@ class ExecutionAndIoTest {
     }
 
     @Test
+    void receiveInputReturnsCorrectStatus() {
+        // No pending request
+        assertFalse(sender.receiveInput("orphan"));
+        
+        // One pending request
+        sender.inputAsync();
+        assertTrue(sender.receiveInput("accepted"));
+        
+        // After completion, no pending request again
+        assertFalse(sender.receiveInput("already done"));
+    }
+
+    @Test
     void multipleInputAsyncRequestsAreQueuedInFifoOrder() throws Exception {
         final CompletableFuture<String> f1 = sender.inputAsync();
         final CompletableFuture<String> f2 = sender.inputAsync();

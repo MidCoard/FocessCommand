@@ -41,14 +41,16 @@ public abstract class AbstractCommandSender implements CommandSender {
      * first incomplete future and completes it.
      *
      * @param input The raw input string to provide.
+     * @return {@code true} if a pending request was completed, {@code false} otherwise.
      */
     @Override
-    public final void receiveInput(@NotNull String input) {
+    public final boolean receiveInput(@NotNull String input) {
         CompletableFuture<String> future;
         while ((future = this.inputFutures.poll()) != null) {
             if (future.complete(input))
-                break;
+                return true;
         }
+        return false;
     }
 
     /**
