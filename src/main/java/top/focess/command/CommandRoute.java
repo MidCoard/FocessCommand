@@ -79,27 +79,51 @@ public class CommandRoute {
             return;
         }
 
-        // 2. Resolve arguments (Executors and Completions)
-        String[] args = new String[tokens.size() - 1];
-        for (int i = 1; i < tokens.size(); i++)
-            args[i - 1] = tokens.get(i).content();
-
+        // 2. Resolve arguments using BFS
         boolean anyVisible = false;
+        List<SearchState> currentStates = Lists.newArrayList();
         for (Command.Executor executor : this.command.getExecutors()) {
             if (sender.hasPermission(executor.getPermission()) && executor.getExecutorPermission().test(sender)) {
                 anyVisible = true;
-                // Collect completions for this executor
-                this.resolveCompletions(executor, args);
-                
-                // Check if this executor matches for dispatch
-                if (this.matchedExecutor == null) {
-                    DataCollection data = this.checkMatch(executor, args);
-                    if (data != null) {
-                        this.matchedExecutor = executor;
-                        this.matchedData = data;
-                        this.state = CommandResult.MATCHED;
+                currentStates.add(new SearchState(executor, 0, new String[executor.getCommandArguments().length]));
+            }
+        }
+
+        for (int i = 1; i < tokens.size(); i++) {
+            String token = tokens.get(i).content();
+            List<SearchState> nextStates = Lists.newArrayList();
+            boolean isLastToken = (i == tokens.size() - 1);
+
+            for (SearchState state : currentStates) {
+                CommandArgument<?>[] cmdArgs = state.executor.getCommandArguments();
+                for (int j = state.argIndex; j < cmdArgs.length; j++) {
+                    // Collect completions for the last token position
+                    if (isLastToken) {
+                        this.completions.addAll(cmdArgs[j].complete(sender, this.command, tokens.stream().map(Token::content).toArray(String[]::new)));
+                        this.currentArguments.add(cmdArgs[j]);
                     }
+
+                    // Try to match the current token to this argument
+                    if (cmdArgs[j].accept(token)) {
+                        nextStates.add(state.next(j, token));
+                    }
+
+                    // If this argument is NOT nullable, we cannot skip it to match the current token to a later argument
+                    if (!cmdArgs[j].isNullable())
+                        break;
                 }
+            }
+            currentStates = nextStates;
+            if (currentStates.isEmpty() && !isLastToken) break;
+        }
+
+        // 3. Identify the best match from terminal states
+        for (SearchState state : currentStates) {
+            if (state.isTerminal()) {
+                this.matchedExecutor = state.executor;
+                this.matchedData = state.buildData();
+                this.state = CommandResult.MATCHED;
+                break; // Take the first valid match (greedy + registration order)
             }
         }
 
@@ -119,65 +143,33 @@ public class CommandRoute {
         }
     }
 
-    private void resolveCompletions(Command.Executor executor, String[] args) {
-        if (args.length == 0 || args.length > executor.getCommandArguments().length)
-            return;
-        this.dfsComplete(executor, args, 0, 0, executor.getCommandArguments().length - (args.length - 1));
-    }
+    private record SearchState(Command.Executor executor, int argIndex, String[] values) {
 
-    private void dfsComplete(Command.Executor executor, String[] args, int indexOfArgs, int index, int nullableLeft) {
-        CommandArgument<?>[] cmdArgs = executor.getCommandArguments();
-        if (indexOfArgs == args.length - 1) {
-            if (index < cmdArgs.length) {
-                this.completions.addAll(cmdArgs[index].complete(sender, this.command, args));
-                this.currentArguments.add(cmdArgs[index]);
-            }
-            if (index < cmdArgs.length && cmdArgs[index].isNullable() && nullableLeft > 0 && index + 1 < cmdArgs.length)
-                this.dfsComplete(executor, args, indexOfArgs, index + 1, nullableLeft - 1);
-            return;
+        public SearchState next(int j, String token) {
+            String[] nextValues = Arrays.copyOf(this.values, this.values.length);
+            nextValues[j] = token;
+            return new SearchState(this.executor, j + 1, nextValues);
         }
-        if (index < cmdArgs.length && cmdArgs[index].isNullable() && nullableLeft > 0)
-            this.dfsComplete(executor, args, indexOfArgs, index + 1, nullableLeft - 1);
-        if (index < cmdArgs.length && cmdArgs[index].accept(args[indexOfArgs]))
-            this.dfsComplete(executor, args, indexOfArgs + 1, index + 1, nullableLeft);
-    }
 
-    @Nullable
-    private DataCollection checkMatch(Command.Executor executor, String[] args) {
-        CommandArgument<?>[] cmdArgs = executor.getCommandArguments();
-        if (args.length > cmdArgs.length)
-            return null;
-        if (args.length < cmdArgs.length - executor.getNullableCommandArguments())
-            return null;
-        
-        List<CommandArgument<?>> matchedList = Lists.newArrayList();
-        if (this.dfsMatch(executor, args, 0, 0, cmdArgs.length - args.length, matchedList)) {
+        public boolean isTerminal() {
+            CommandArgument<?>[] cmdArgs = executor.getCommandArguments();
+            for (int i = argIndex; i < cmdArgs.length; i++)
+                if (!cmdArgs[i].isNullable())
+                    return false;
+            return true;
+        }
+
+        public DataCollection buildData() {
+            CommandArgument<?>[] cmdArgs = executor.getCommandArguments();
             DataCollection data = new DataCollection(Arrays.stream(cmdArgs).map(CommandArgument::getDataConverter).toArray(DataConverter[]::new));
-            for (int i = 0; i < args.length; i++)
-                matchedList.get(i).put(data, args[i]);
+            for (int i = 0; i < cmdArgs.length; i++) {
+                if (values[i] != null) {
+                    cmdArgs[i].put(data, values[i]);
+                }
+            }
             data.flip();
             return data;
         }
-        return null;
-    }
-
-    private boolean dfsMatch(Command.Executor executor, String[] args, int indexOfArgs, int index, int nullableLeft, List<CommandArgument<?>> matchedList) {
-        CommandArgument<?>[] cmdArgs = executor.getCommandArguments();
-        if (indexOfArgs == args.length)
-            return true;
-        if (index >= cmdArgs.length)
-            return false;
-        if (cmdArgs[index].isNullable() && nullableLeft > 0) {
-            if (this.dfsMatch(executor, args, indexOfArgs, index + 1, nullableLeft - 1, matchedList))
-                return true;
-        }
-        if (cmdArgs[index].accept(args[indexOfArgs])) {
-            matchedList.add(cmdArgs[index]);
-            if (this.dfsMatch(executor, args, indexOfArgs + 1, index + 1, nullableLeft, matchedList))
-                return true;
-            matchedList.remove(matchedList.size() - 1);
-        }
-        return false;
     }
 
     /**

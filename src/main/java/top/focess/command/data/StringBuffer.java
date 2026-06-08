@@ -10,13 +10,10 @@ import java.nio.CharBuffer;
  */
 public class StringBuffer extends DataBuffer<String> {
 
-    private final IntBuffer intBuffer;
-
     private final CharBuffer[] charBuffers;
     private int pos;
 
     private StringBuffer(final int size) {
-        this.intBuffer = IntBuffer.allocate(size);
         this.charBuffers = new CharBuffer[size];
     }
 
@@ -32,29 +29,39 @@ public class StringBuffer extends DataBuffer<String> {
         return new StringBuffer(size);
     }
 
+    @Override
     public void flip() {
-        this.intBuffer.flip();
+        this.pos = 0;
     }
 
+    @Override
     public void put(final String s) {
-        if (s == null) {
-            this.charBuffers[this.pos] = null;
-        } else {
-            this.charBuffers[this.pos] = CharBuffer.allocate(s.length()).put(s);
-            this.charBuffers[this.pos].flip();
+        if (this.pos < this.charBuffers.length) {
+            if (s == null) {
+                this.charBuffers[this.pos++] = null;
+            } else {
+                this.charBuffers[this.pos] = CharBuffer.allocate(s.length()).put(s);
+                this.charBuffers[this.pos].flip();
+                this.pos++;
+            }
         }
-        this.intBuffer.put(this.pos++);
     }
 
     @Override
     public String get() {
-        CharBuffer cb = this.charBuffers[this.intBuffer.get()];
-        return cb == null ? null : new String(cb.array());
+        if (this.pos < this.charBuffers.length) {
+            CharBuffer cb = this.charBuffers[this.pos++];
+            return cb == null ? null : new String(cb.array());
+        }
+        return null;
     }
 
     @Override
     public String get(final int index) {
-        CharBuffer cb = this.charBuffers[this.intBuffer.get(index)];
-        return cb == null ? null : new String(cb.array());
+        if (index >= 0 && index < this.charBuffers.length) {
+            CharBuffer cb = this.charBuffers[index];
+            return cb == null ? null : new String(cb.array());
+        }
+        return null;
     }
 }
