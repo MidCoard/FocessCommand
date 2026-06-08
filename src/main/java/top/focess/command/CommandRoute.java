@@ -99,7 +99,8 @@ public class CommandRoute {
                 for (int j = state.argIndex; j < cmdArgs.length; j++) {
                     // Collect completions for the last token position
                     if (isLastToken) {
-                        this.completions.addAll(cmdArgs[j].complete(sender, this.command, tokens.stream().map(Token::content).toArray(String[]::new)));
+                        String[] commandArgs = tokens.stream().skip(1).map(Token::content).toArray(String[]::new);
+                        this.completions.addAll(cmdArgs[j].complete(sender, this.command, commandArgs));
                         this.currentArguments.add(cmdArgs[j]);
                     }
 

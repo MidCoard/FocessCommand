@@ -72,21 +72,24 @@ public class CommandArgument<V> {
     /**
      * Get the auto-complete suggestions for this argument.
      * <p>
-     * The {@code args} array must contain the command's arguments as produced by a tokenizer.
-     * It should NOT include the command name itself. The last element is treated as the 
-     * partial argument currently being completed.
+     * The {@code args} array must contain the tokens as produced by a tokenizer,
+     * typically excluding the command name (i.e., the "args" passed into a command 
+     * dispatcher). The last element is treated as the partial argument currently 
+     * being completed.
      * 
      * <h2>Example Usage</h2>
      * <pre>{@code
-     * String input = "party create ";
+     * CommandRoute route = manager.route(sender, input);
      * String[] args = CommandManager.tokenizeToCommandArgs(input);
-     * List<CommandCompletion> suggestions = argument.complete(sender, command, args);
+     * for (CommandArgument<?> arg : route.getCurrentArguments()) {
+     *     List<CommandCompletion> suggestions = arg.complete(sender, route.getCommand(), args);
+     * }
      * }</pre>
      * 
      * @param sender  the executor
      * @param command the command
-     * @param args    the tokenized arguments following the command name. 
-     *                See {@link CommandManager#tokenizeToCommandArgs(String)} for the expected format.
+     * @param args    the tokenized arguments. See {@link CommandManager#tokenizeToCommandArgs(String)} 
+     *                for the expected format.
      * @return the auto-complete suggestions
      */
     @NotNull
