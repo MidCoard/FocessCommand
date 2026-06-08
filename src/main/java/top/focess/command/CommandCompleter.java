@@ -18,8 +18,9 @@ public interface CommandCompleter {
      * @param sender  The entity requesting completions. Can be used for permission-based 
      *                suggestions.
      * @param command The root command being completed.
-     * @param args    The current array of input tokens. The last element ({@code args[args.length - 1]}) 
-     *                is the partial string currently being typed by the user.
+     * @param args    The current array of input tokens. The last element is the partial string 
+     *                currently being typed by the user. If the array is empty, it means 
+     *                no arguments have been provided yet.
      * @return A non-null list of {@link CommandCompletion} objects. Return an empty list 
      *         if no suggestions are available.
      */

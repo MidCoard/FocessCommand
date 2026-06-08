@@ -70,18 +70,30 @@ public class CommandArgument<V> {
     }
 
     /**
-     * Get the auto-complete suggestions for this argument
-     *
+     * Get the auto-complete suggestions for this argument.
+     * <p>
+     * The {@code args} array must contain the command's arguments as produced by a tokenizer.
+     * It should NOT include the command name itself. The last element is treated as the 
+     * partial argument currently being completed.
+     * 
+     * <h2>Example Usage</h2>
+     * <pre>{@code
+     * String input = "party create ";
+     * String[] args = CommandManager.tokenizeToCommandArgs(input);
+     * List<CommandCompletion> suggestions = argument.complete(sender, command, args);
+     * }</pre>
+     * 
      * @param sender  the executor
      * @param command the command
-     * @param args    all the arguments that command spilt by spaces, the last one is the partial argument
+     * @param args    the tokenized arguments following the command name. 
+     *                See {@link CommandManager#tokenizeToCommandArgs(String)} for the expected format.
      * @return the auto-complete suggestions
      */
     @NotNull
     public List<CommandCompletion> complete(@NotNull final CommandSender sender, @NotNull final Command command, @NotNull final String[] args) {
         if (this.completer != null)
             return this.completer.complete(sender, command, args);
-        final String arg = args[args.length - 1];
+        final String arg = args.length == 0 ? "" : args[args.length - 1];
         if (this.isFixed()) {
             final String valueString = String.valueOf(this.value);
             if (valueString.toLowerCase().startsWith(arg.toLowerCase()))

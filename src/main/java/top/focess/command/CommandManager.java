@@ -159,17 +159,55 @@ public class CommandManager {
         return new CommandRoute(this, sender, input, tokenize(input));
     }
 
+    /**
+     * Tokenizes a raw command string into an array of arguments, including the command name.
+     * <p>
+     * This method respects both single (') and double (") quotes and handles 
+     * unclosed quotes gracefully. 
+     *
+     * @param input The raw command string.
+     * @return An array of tokens including the command name.
+     */
+    @NotNull
+    public static String[] tokenizeToArgs(@NotNull String input) {
+        return tokenizeToTokens(input).stream().map(Token::content).toArray(String[]::new);
+    }
+
+    /**
+     * Tokenizes a raw command string into an array of arguments, excluding the command name.
+     * <p>
+     * This is a helper method specifically designed for use with 
+     * {@link CommandArgument#complete(CommandSender, Command, String[])}.
+     *
+     * @param input The raw command string.
+     * @return An array of arguments following the command name.
+     */
+    @NotNull
+    public static String[] tokenizeToCommandArgs(@NotNull String input) {
+        String[] args = tokenizeToArgs(input);
+        if (args.length <= 1)
+            return new String[0];
+        String[] result = new String[args.length - 1];
+        System.arraycopy(args, 1, result, 0, result.length);
+        return result;
+    }
+
     record Token(String content, boolean isQuoted, boolean isUnclosed) {
     }
 
     @NotNull
     private List<Token> tokenize(@NotNull String input) {
+        return tokenizeToTokens(input);
+    }
+
+    @NotNull
+    private static List<Token> tokenizeToTokens(@NotNull String input) {
         List<Token> tokens = new ArrayList<>();
         StringBuilder current = new StringBuilder();
         boolean inDoubleQuote = false;
         boolean inSingleQuote = false;
         boolean hasArg = false;
-        
+
         for (int i = 0; i < input.length(); i++) {
             char c = input.charAt(i);
             if (c == '\"' && !inSingleQuote) {
@@ -203,7 +241,7 @@ public class CommandManager {
                 hasArg = true;
             }
         }
-        
+
         if (inDoubleQuote || inSingleQuote) {
             tokens.add(new Token(current.toString(), true, true));
         } else if (hasArg || !current.isEmpty()) {
@@ -213,7 +251,9 @@ public class CommandManager {
         if (input.isEmpty() || (Character.isWhitespace(input.charAt(input.length() - 1)) && !inDoubleQuote && !inSingleQuote)) {
             tokens.add(new Token("", false, false));
         }
-        
+
         return tokens;
     }
+
+
 }

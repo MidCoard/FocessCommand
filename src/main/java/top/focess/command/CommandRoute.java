@@ -31,7 +31,7 @@ public class CommandRoute {
     private final CommandSender sender;
     private final String input;
     private final List<Token> tokens;
-    
+
     private Command command;
     private Command.Executor matchedExecutor;
     private DataCollection matchedData;
@@ -142,6 +142,7 @@ public class CommandRoute {
             }
         }
     }
+
 
     private record SearchState(Command.Executor executor, int argIndex, String[] values) {
 
