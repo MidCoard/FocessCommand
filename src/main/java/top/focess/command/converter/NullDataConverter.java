@@ -11,6 +11,12 @@ import top.focess.command.DataConverter;
  */
 public abstract class NullDataConverter<T> extends DataConverter<T> {
 
+    /**
+     * Constructs a new {@code NullDataConverter}.
+     */
+    protected NullDataConverter() {
+    }
+
     @Override
     public boolean accept(final String arg) {
         return this.convert(arg) != null;

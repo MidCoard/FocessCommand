@@ -77,7 +77,7 @@ public class CommandArgument<V> {
      * dispatcher). The last element is treated as the partial argument currently 
      * being completed.
      * 
-     * <h2>Example Usage</h2>
+     * <b>Example Usage</b>
      * <pre>{@code
      * CommandRoute route = manager.route(sender, input);
      * String[] args = CommandManager.tokenizeToCommandArgs(input);

@@ -15,6 +15,12 @@ import org.jetbrains.annotations.NotNull;
 public abstract class DataBuffer<T> {
 
     /**
+     * Constructs a new {@code DataBuffer}.
+     */
+    protected DataBuffer() {
+    }
+
+    /**
      * Finalizes the writing phase and prepares the buffer for reading.
      * <p>
      * After this call, internal pointers are typically reset so that {@link #get()} 

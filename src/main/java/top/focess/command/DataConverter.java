@@ -35,6 +35,12 @@ import java.util.stream.Collectors;
 public abstract class DataConverter<T> {
 
     /**
+     * Constructs a new {@code DataConverter}.
+     */
+    protected DataConverter() {
+    }
+
+    /**
      * Matches an optionally-signed sequence of digits (a candidate integral value).
      */
     private static final Pattern INTEGRAL_PATTERN = Pattern.compile("[+-]?\\d+");

@@ -10,6 +10,12 @@ import top.focess.command.DataConverter;
  */
 public abstract class ExceptionDataConverter<T> extends DataConverter<T> {
 
+    /**
+     * Constructs a new {@code ExceptionDataConverter}.
+     */
+    protected ExceptionDataConverter() {
+    }
+
     @Override
     public boolean accept(final String arg) {
         try {
