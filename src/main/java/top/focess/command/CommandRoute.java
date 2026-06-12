@@ -202,6 +202,7 @@ public class CommandRoute {
         if (this.state == CommandResult.MATCHED) {
             CommandResult result;
             String exceptionMessage = null;
+            Exception caughtException = null;
             
             try {
                 result = this.matchedExecutor.getExecutor().execute(this.sender, this.matchedData);
@@ -212,6 +213,7 @@ public class CommandRoute {
             } catch (Exception e) {
                 result = CommandResult.REFUSE_EXCEPTION;
                 exceptionMessage = e.getMessage();
+                caughtException = e;
             }
 
             // Handle CommandResultExecutors for all trackable states (including exceptions)
@@ -225,7 +227,7 @@ public class CommandRoute {
                 this.command.infoUsage(this.sender);
             }
             
-            return ExecutionResult.of(result, exceptionMessage);
+            return ExecutionResult.of(result, exceptionMessage, caughtException);
         }
 
         throw new IllegalStateException("Unreachable state: " + this.state);

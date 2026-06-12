@@ -12,9 +12,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 class ExecutionAndIoTest {
 
@@ -41,6 +39,9 @@ class ExecutionAndIoTest {
 
         assertEquals(CommandResult.REFUSE_EXCEPTION, result.result());
         assertEquals("kaboom", result.getMessage().orElse(null));
+        assertTrue(result.getException().isPresent());
+        assertInstanceOf(IllegalStateException.class, result.getException().get());
+        assertEquals("kaboom", result.getException().get().getMessage());
         assertFalse(result.isExecuted());
     }
 
