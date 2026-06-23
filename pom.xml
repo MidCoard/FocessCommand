@@ -16,7 +16,7 @@
         <guava.version>33.6.0-jre</guava.version>
         <annotations.version>26.1.0</annotations.version>
         <junit.version>6.1.0</junit.version>
-        <central.publishing.plugin.version>0.10.0</central.publishing.plugin.version>
+        <central.publishing.plugin.version>0.11.0</central.publishing.plugin.version>
     </properties>
 
     <dependencies>
