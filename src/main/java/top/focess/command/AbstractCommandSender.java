@@ -17,7 +17,7 @@ import java.util.concurrent.TimeUnit;
 public abstract class AbstractCommandSender implements CommandSender {
 
     private final CommandPermission commandPermission;
-    private final Queue<CompletableFuture<String>> inputFutures = new ConcurrentLinkedQueue<>();
+    protected final Queue<CompletableFuture<String>> inputFutures = new ConcurrentLinkedQueue<>();
 
     /**
      * Constructs an {@code AbstractCommandSender} with a specific permission level.
